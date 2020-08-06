@@ -1,0 +1,26 @@
+syntax = "proto3";
+package raft;
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
+message LogOperation {
+    // OpType is the Operation type
+	uint32 op_type = 1;
+
+	// table
+	bytes tab = 2;
+
+	// Key that is being affected
+	bytes key = 3;
+
+	// Value is optional, corresponds to the key
+	bytes val = 4;
+}
+
+message LogData {
+	repeated LogOperation operations = 1;
+}

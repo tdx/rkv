@@ -1,0 +1,49 @@
+syntax = "proto3";
+package kv.v1;
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
+message StorageEntry {
+    bytes key = 1;
+    bytes val = 2;
+}
+
+message StoragePutArgs {
+    bytes tab = 1;
+    bytes key = 2;
+    bytes val = 3;
+}
+
+message StoragePutReply {
+    string err = 1;
+}
+
+message StorageGetArgs {
+    bytes tab = 1;
+    bytes key = 2;
+}
+
+message StorageGetReply {
+    bytes  val = 1;
+    string err = 2;
+}
+
+message StorageDeleteArgs {
+    bytes tab = 1;
+    bytes key = 2;
+}
+
+message StorageDeleteReply {
+    string err = 1;
+}
+
+// This rpc call used to redirect Put opetation to raft leader
+service Storage {
+    rpc Put(StoragePutArgs) returns (StoragePutReply);
+    rpc Get(StorageGetArgs) returns (StorageGetReply);
+    rpc Delete(StorageDeleteArgs) returns (StorageDeleteReply);
+}
