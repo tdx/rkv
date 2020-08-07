@@ -3,8 +3,8 @@ package rkv
 import (
 	"fmt"
 
-	"rkv/api"
-	"rkv/internal/agent"
+	"github.com/tdx/rkv/api"
+	"github.com/tdx/rkv/internal/agent"
 
 	log "github.com/hashicorp/go-hclog"
 )

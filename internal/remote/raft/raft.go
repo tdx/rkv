@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"rkv/internal/db/bolt"
-	remoteApi "rkv/internal/remote/api"
+	"github.com/tdx/rkv/internal/db/bolt"
+	remoteApi "github.com/tdx/rkv/internal/remote/api"
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/hashicorp/go-hclog"

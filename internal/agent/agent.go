@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"rkv/internal/discovery"
-	remoteApi "rkv/internal/remote/api"
-	rbk "rkv/internal/remote/raft"
-	"rkv/internal/server"
+	"github.com/tdx/rkv/internal/discovery"
+	remoteApi "github.com/tdx/rkv/internal/remote/api"
+	rbk "github.com/tdx/rkv/internal/remote/raft"
+	"github.com/tdx/rkv/internal/server"
 
 	log "github.com/hashicorp/go-hclog"
 	"google.golang.org/grpc"

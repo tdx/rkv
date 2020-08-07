@@ -3,10 +3,10 @@ package rkv_test
 import (
 	"fmt"
 	"io/ioutil"
-	"rkv"
 	"testing"
 
-	"rkv/api"
+	"github.com/tdx/rkv"
+	"github.com/tdx/rkv/api"
 
 	"github.com/stretchr/testify/require"
 	"github.com/travisjeffery/go-dynaport"

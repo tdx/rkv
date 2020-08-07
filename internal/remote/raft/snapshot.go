@@ -1,7 +1,7 @@
 package raft
 
 import (
-	dbApi "rkv/internal/db/api"
+	dbApi "github.com/tdx/rkv/internal/db/api"
 
 	log "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/raft"

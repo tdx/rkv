@@ -1,2 +1,2 @@
 # rkv
-distributed kv store: serf + raft + boltdb
+embedded distributed key-value store: serf + raft + boltdb

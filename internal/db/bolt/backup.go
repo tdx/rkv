@@ -3,7 +3,7 @@ package bolt
 import (
 	"io"
 
-	dbApi "rkv/internal/db/api"
+	dbApi "github.com/tdx/rkv/internal/db/api"
 
 	"github.com/boltdb/bolt"
 )

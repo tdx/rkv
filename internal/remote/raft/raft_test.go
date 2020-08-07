@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	dbApi "rkv/internal/db/api"
-	rRaft "rkv/internal/remote/raft"
+	dbApi "github.com/tdx/rkv/internal/db/api"
+	rRaft "github.com/tdx/rkv/internal/remote/raft"
 
 	"github.com/hashicorp/raft"
 	"github.com/stretchr/testify/require"

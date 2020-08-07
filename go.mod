@@ -1,4 +1,4 @@
-module rkv
+module github.com/tdx/rkv
 
 go 1.14
 
@@ -10,5 +10,7 @@ require (
 	github.com/hashicorp/raft-boltdb v0.0.0-20191021154308-4207f1bf0617
 	github.com/hashicorp/serf v0.9.3
 	github.com/rboyer/safeio v0.2.1
+	github.com/stretchr/testify v1.4.0
+	github.com/travisjeffery/go-dynaport v1.0.0
 	google.golang.org/grpc v1.31.0
 )

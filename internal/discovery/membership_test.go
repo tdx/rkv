@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	. "rkv/internal/discovery"
+	. "github.com/tdx/rkv/internal/discovery"
 
 	"github.com/hashicorp/serf/serf"
 	"github.com/stretchr/testify/require"

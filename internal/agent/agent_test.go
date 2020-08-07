@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"rkv/internal/agent"
+	"github.com/tdx/rkv/internal/agent"
 
 	log "github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/require"

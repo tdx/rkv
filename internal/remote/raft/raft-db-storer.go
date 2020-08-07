@@ -1,7 +1,7 @@
 package raft
 
 import (
-	rpcRaft "rkv/internal/rpc/raft"
+	rpcRaft "github.com/tdx/rkv/internal/rpc/raft"
 )
 
 const (

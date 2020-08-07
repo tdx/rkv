@@ -1,7 +1,7 @@
 package raft
 
 import (
-	dbApi "rkv/internal/db/api"
+	dbApi "github.com/tdx/rkv/internal/db/api"
 )
 
 var _ dbApi.Storer = (*fsm)(nil)

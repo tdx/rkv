@@ -1,7 +1,7 @@
 package raft
 
 import (
-	"rkv/internal/discovery"
+	"github.com/tdx/rkv/internal/discovery"
 
 	"github.com/hashicorp/raft"
 )

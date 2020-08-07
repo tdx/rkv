@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	dbApi "rkv/internal/db/api"
-	"rkv/internal/db/bolt"
+	dbApi "github.com/tdx/rkv/internal/db/api"
+	"github.com/tdx/rkv/internal/db/bolt"
 
 	"github.com/stretchr/testify/require"
 )

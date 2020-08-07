@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"rkv/internal/db/bolt"
-	remoteApi "rkv/internal/remote/api"
-	rpcApi "rkv/internal/rpc/v1"
-	"rkv/internal/server"
+	"github.com/tdx/rkv/internal/db/bolt"
+	remoteApi "github.com/tdx/rkv/internal/remote/api"
+	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
+	"github.com/tdx/rkv/internal/server"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"

@@ -1,7 +1,7 @@
 package server
 
 import (
-	remoteApi "rkv/internal/remote/api"
+	remoteApi "github.com/tdx/rkv/internal/remote/api"
 
 	log "github.com/hashicorp/go-hclog"
 )

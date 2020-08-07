@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 
-	remoteApi "rkv/internal/remote/api"
-	rpcApi "rkv/internal/rpc/v1"
+	remoteApi "github.com/tdx/rkv/internal/remote/api"
+	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 
 	log "github.com/hashicorp/go-hclog"
 	"google.golang.org/grpc"

@@ -1,12 +1,20 @@
 package agent
 
-import "rkv/api"
+import (
+	"github.com/tdx/rkv/api"
+
+	remoteApi "github.com/tdx/rkv/internal/remote/api"
+)
 
 var _ api.Client = (*Agent)(nil)
 
 // Put ...
 func (a *Agent) Put(tab, key, value []byte) error {
-	return a.db.Put(tab, key, value)
+	if isLeader(a.db) {
+		return a.db.Put(tab, key, value)
+	}
+	// TODO: rpc call
+	return api.ErrNodeIsNotALeader
 }
 
 // Get ...
@@ -16,5 +24,14 @@ func (a *Agent) Get(tab, key []byte) ([]byte, error) {
 
 // Delete ...
 func (a *Agent) Delete(tab, key []byte) error {
-	return a.db.Delete(tab, key)
+	if isLeader(a.db) {
+		return a.db.Delete(tab, key)
+	}
+	// TODO: rpc call
+	return api.ErrNodeIsNotALeader
+}
+
+//
+func isLeader(db remoteApi.Backend) bool {
+	return db.(remoteApi.Leader).IsLeader()
 }
