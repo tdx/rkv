@@ -224,15 +224,15 @@ func (d *Backend) applyLog(req proto.Marshaler) (interface{}, error) {
 		return nil, err
 	}
 
-	timeout := 2 * time.Second
-	future := d.raft.Apply(b, timeout)
+	future := d.raft.Apply(b, 0)
 	if future.Error() != nil {
-		return nil, future.Error()
+		return nil, fmt.Errorf(
+			"%s apply failed: %v", d.logger.Name(), future.Error())
 	}
 
 	res := future.Response()
 	if err, ok := res.(error); ok {
-		return nil, err
+		return nil, fmt.Errorf("%s apply failed: %v", d.logger.Name(), err)
 	}
 
 	return res, nil
