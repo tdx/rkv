@@ -15,6 +15,7 @@ import (
 	log "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
+	raftldb "github.com/tidwall/raft-leveldb"
 )
 
 const (
@@ -95,7 +96,9 @@ func (d *Backend) setupRaft(dataDir string) error {
 	}
 
 	// Create the backend raft store for logs and stable storage.
-	store, err := raftboltdb.NewBoltStore(filepath.Join(path, "raft.db"))
+	// store, err := raftboltdb.NewBoltStore(filepath.Join(path, "raft.db"))
+	store, err := raftldb.NewLevelDBStore(
+		filepath.Join(path, "stable/wal.log"), raftldb.High)
 	if err != nil {
 		return err
 	}
