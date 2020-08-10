@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	dbApi "github.com/tdx/rkv/db/api"
+	"github.com/tdx/rkv/db/bitcask"
+	"github.com/tdx/rkv/db/bolt"
 	"github.com/tdx/rkv/db/gmap"
 	"github.com/tdx/rkv/internal/agent"
 
@@ -16,7 +19,19 @@ import (
 	"github.com/travisjeffery/go-dynaport"
 )
 
-func TestAgent(t *testing.T) {
+func TestAgentBolt(t *testing.T) {
+	runAgent(t, "bolt")
+}
+
+func TestAgentMap(t *testing.T) {
+	runAgent(t, "gmap")
+}
+
+func TestAgentBitcask(t *testing.T) {
+	runAgent(t, "bitcask")
+}
+
+func runAgent(t *testing.T, bkType string) {
 	var agents []*agent.Agent
 	for i := 0; i < 3; i++ {
 		ports := dynaport.Get(3)
@@ -25,8 +40,15 @@ func TestAgent(t *testing.T) {
 		dataDir, err := ioutil.TempDir("", "agent-test")
 		require.NoError(t, err)
 
-		// db, err := bolt.New(dataDir)
-		db, err := gmap.New(dataDir)
+		var db dbApi.Backend
+		switch bkType {
+		case "gmap":
+			db, err = gmap.New(dataDir)
+		case "bitcask":
+			db, err = bitcask.New(dataDir)
+		default:
+			db, err = bolt.New(dataDir)
+		}
 		require.NoError(t, err)
 
 		var startJoinAddrs []string

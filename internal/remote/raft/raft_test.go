@@ -9,6 +9,7 @@ import (
 	"time"
 
 	dbApi "github.com/tdx/rkv/db/api"
+	"github.com/tdx/rkv/db/bitcask"
 	"github.com/tdx/rkv/db/bolt"
 	"github.com/tdx/rkv/db/gmap"
 	rRaft "github.com/tdx/rkv/internal/remote/raft"
@@ -24,6 +25,10 @@ func TestNodesBolt(t *testing.T) {
 
 func TestNodesMap(t *testing.T) {
 	run(t, "gmap")
+}
+
+func TestNodesBitcask(t *testing.T) {
+	run(t, "bitcask")
 }
 
 func run(t *testing.T, bkType string) {
@@ -62,6 +67,8 @@ func run(t *testing.T, bkType string) {
 		switch bkType {
 		case "gmap":
 			db, err = gmap.New(dataDir)
+		case "bitcask":
+			db, err = bitcask.New(dataDir)
 		default:
 			db, err = bolt.New(dataDir)
 		}

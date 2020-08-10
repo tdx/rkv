@@ -9,6 +9,7 @@ import (
 	"github.com/tdx/rkv"
 	"github.com/tdx/rkv/api"
 	dbApi "github.com/tdx/rkv/db/api"
+	"github.com/tdx/rkv/db/bitcask"
 	"github.com/tdx/rkv/db/bolt"
 	"github.com/tdx/rkv/db/gmap"
 
@@ -17,36 +18,38 @@ import (
 )
 
 func TestClientBolt(t *testing.T) {
-
-	dataDir, err := ioutil.TempDir("", "client-test-*")
-	require.NoError(t, err)
-
-	defer os.RemoveAll(dataDir)
-
-	bk, err := bolt.New(dataDir)
-	require.NoError(t, err)
-
-	run(t, bk)
+	run(t, "bolt")
 }
 
 func TestClientMap(t *testing.T) {
+	run(t, "gmap")
+}
+
+func TestClientBitcask(t *testing.T) {
+	run(t, "bitcask")
+}
+
+func run(t *testing.T, bkType string) {
 	dataDir, err := ioutil.TempDir("", "client-test-*")
 	require.NoError(t, err)
 
 	defer os.RemoveAll(dataDir)
 
-	bk, err := gmap.New(dataDir)
+	var db dbApi.Backend
+	switch bkType {
+	case "gmap":
+		db, err = gmap.New(dataDir)
+	case "bitcask":
+		db, err = bitcask.New(dataDir)
+	default:
+		db, err = bolt.New(dataDir)
+	}
 	require.NoError(t, err)
 
-	run(t, bk)
-
-}
-
-func run(t *testing.T, bk dbApi.Backend) {
 	ports := dynaport.Get(2)
 
 	config := &api.Config{
-		Backend:         bk,
+		Backend:         db,
 		DiscoveryAddr:   fmt.Sprintf("127.0.0.1:%d", ports[0]),
 		DistributedPort: ports[1],
 		LogLevel:        "debug",
