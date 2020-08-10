@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	dbApi "github.com/tdx/rkv/internal/db/api"
+	dbApi "github.com/tdx/rkv/db/api"
 	rpcRaft "github.com/tdx/rkv/internal/rpc/raft"
 
 	log "github.com/hashicorp/go-hclog"

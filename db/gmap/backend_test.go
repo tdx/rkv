@@ -1,12 +1,12 @@
-package bolt_test
+package gmap_test
 
 import (
 	"io/ioutil"
 	"os"
 	"testing"
 
-	dbApi "github.com/tdx/rkv/internal/db/api"
-	"github.com/tdx/rkv/internal/db/bolt"
+	dbApi "github.com/tdx/rkv/db/api"
+	"github.com/tdx/rkv/db/gmap"
 
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +14,7 @@ import (
 func TestBackend(t *testing.T) {
 	defer os.RemoveAll("/tmp/rkv")
 
-	db, err := bolt.New("/tmp/rkv")
+	db, err := gmap.New("/tmp/rkv")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +88,7 @@ func TestBackend(t *testing.T) {
 func TestBackupRestore(t *testing.T) {
 	defer os.RemoveAll("/tmp/rkv")
 
-	db, err := bolt.New("/tmp/rkv")
+	db, err := gmap.New("/tmp/rkv")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,18 +97,21 @@ func TestBackupRestore(t *testing.T) {
 	t.Log("db file:", db.DSN())
 
 	var (
-		tab = []byte{'t', 'a', 'b'}
-		key = []byte{'k', 'e', 'y'}
-		val = []byte{'v', 'a', 'l'}
+		tab  = []byte{'t', 'a', 'b'}
+		key  = []byte{'k', 'e', 'y'}
+		val  = []byte{'v', 'a', 'l'}
+		key2 = []byte{'k', 'e', 'y', '2'}
+		val2 = []byte{'v', 'a', 'l', '2'}
 	)
 
 	require.NoError(t, db.Put(tab, key, val))
+	require.NoError(t, db.Put(tab, key2, val2))
 
 	v, err := db.Get(tab, key)
 	require.Equal(t, val, v)
 
-	tmpFile, err := ioutil.TempFile("/tmp", "rkv-bk-*")
-	defer os.Remove(tmpFile.Name())
+	tmpFile, err := ioutil.TempFile("", "rkv-bk-*")
+	// defer os.Remove(tmpFile.Name())
 
 	t.Log("backup db to:", tmpFile.Name())
 
@@ -126,4 +129,8 @@ func TestBackupRestore(t *testing.T) {
 	v, err = db.Get(tab, key)
 	require.NoError(t, err)
 	require.Equal(t, val, v)
+
+	v, err = db.Get(tab, key2)
+	require.NoError(t, err)
+	require.Equal(t, val2, v)
 }

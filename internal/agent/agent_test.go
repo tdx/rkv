@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tdx/rkv/db/bolt"
 	"github.com/tdx/rkv/internal/agent"
 
 	log "github.com/hashicorp/go-hclog"
@@ -21,6 +22,9 @@ func TestAgent(t *testing.T) {
 		bindAddr := fmt.Sprintf("127.0.0.1:%d", ports[0]) // serf
 
 		dataDir, err := ioutil.TempDir("", "agent-test")
+		require.NoError(t, err)
+
+		db, err := bolt.New(dataDir)
 		require.NoError(t, err)
 
 		var startJoinAddrs []string
@@ -39,13 +43,13 @@ func TestAgent(t *testing.T) {
 			Level: log.Debug,
 		})
 
-		agent, err := agent.New(agent.Config{
+		agent, err := agent.New(&agent.Config{
+			Backend:        db,
 			Logger:         logger,
 			NodeName:       nodeName,
 			BindAddr:       bindAddr,
 			RPCPort:        ports[1],
 			RaftPort:       ports[2],
-			DataDir:        dataDir,
 			StartJoinAddrs: startJoinAddrs,
 			Bootstrap:      bootstrap,
 		})
@@ -55,11 +59,11 @@ func TestAgent(t *testing.T) {
 	}
 	defer func() {
 		for _, agent := range agents {
+			dir := agent.Config.Backend.DSN()
+
 			err := agent.Shutdown()
 			require.NoError(t, err)
-			require.NoError(t,
-				os.RemoveAll(agent.Config.DataDir),
-			)
+			require.NoError(t, os.RemoveAll(dir))
 		}
 	}()
 	time.Sleep(3 * time.Second)
@@ -85,4 +89,6 @@ func TestAgent(t *testing.T) {
 	followerVal, err := followerClient.Get(tab, key)
 	require.NoError(t, err)
 	require.Equal(t, val, followerVal)
+
+	require.True(t, false)
 }

@@ -17,10 +17,10 @@ import (
 
 // Agent ...
 type Agent struct {
-	Config
+	*Config
 
 	logger     log.Logger
-	db         remoteApi.Backend
+	raftDb     remoteApi.Backend
 	server     *grpc.Server
 	membership *discovery.Membership
 
@@ -29,7 +29,7 @@ type Agent struct {
 }
 
 // New returns agent instance
-func New(config Config) (*Agent, error) {
+func New(config *Config) (*Agent, error) {
 
 	logger := config.Logger
 	if logger == nil {
@@ -46,7 +46,7 @@ func New(config Config) (*Agent, error) {
 	}
 
 	setup := []func() error{
-		a.setupBackend,
+		a.setupDistributed,
 		a.setupServer,
 		a.setupMembership,
 	}
@@ -58,7 +58,7 @@ func New(config Config) (*Agent, error) {
 	return a, nil
 }
 
-func (a *Agent) setupBackend() error {
+func (a *Agent) setupDistributed() error {
 
 	raftAddr, err := a.Config.RaftAddr()
 	if err != nil {
@@ -75,16 +75,16 @@ func (a *Agent) setupBackend() error {
 	config.Raft.Bootstrap = a.Config.Bootstrap
 	config.Raft.Config.Logger = a.logger.Named("raft")
 
-	a.db, err = rbk.NewBackend(a.Config.DataDir, config)
+	a.raftDb, err = rbk.New(a.Config.Backend, config)
 	if a.Config.Bootstrap {
-		return a.db.(remoteApi.Leader).WaitForLeader(3 * time.Second)
+		return a.raftDb.(remoteApi.Leader).WaitForLeader(3 * time.Second)
 	}
 	return err
 }
 
 func (a *Agent) setupServer() error {
 	config := &server.Config{
-		Db: a.db,
+		Db: a.raftDb,
 	}
 
 	var err error
@@ -117,7 +117,7 @@ func (a *Agent) setupMembership() error {
 		return err
 	}
 
-	discoHandler := a.db.(discovery.Handler)
+	discoHandler := a.raftDb.(discovery.Handler)
 
 	a.membership, err = discovery.New(
 		discoHandler,
@@ -151,7 +151,7 @@ func (a *Agent) Shutdown() error {
 			a.server.GracefulStop()
 			return nil
 		},
-		a.db.Close,
+		a.raftDb.Close,
 	}
 
 	for _, fn := range shutdown {

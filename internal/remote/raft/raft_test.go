@@ -8,7 +8,8 @@ import (
 	"testing"
 	"time"
 
-	dbApi "github.com/tdx/rkv/internal/db/api"
+	dbApi "github.com/tdx/rkv/db/api"
+	"github.com/tdx/rkv/db/bolt"
 	rRaft "github.com/tdx/rkv/internal/remote/raft"
 
 	"github.com/hashicorp/raft"
@@ -24,6 +25,7 @@ func TestNodes(t *testing.T) {
 	for i := 0; i < nodeCount; i++ {
 		dataDir, err := ioutil.TempDir("", "raft-db-test")
 		require.NoError(t, err)
+
 		defer func(dir string) {
 			_ = os.RemoveAll(dir)
 		}(dataDir)
@@ -47,7 +49,10 @@ func TestNodes(t *testing.T) {
 			config.Raft.Bootstrap = true
 		}
 
-		node, err := rRaft.NewBackend(dataDir, config)
+		db, err := bolt.New(dataDir)
+		require.NoError(t, err)
+
+		node, err := rRaft.New(db, config)
 		require.NoError(t, err)
 
 		if i != 0 {

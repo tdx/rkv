@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tdx/rkv/db/bolt"
+
 	"github.com/hashicorp/raft"
 	"github.com/stretchr/testify/require"
 	"github.com/travisjeffery/go-dynaport"
@@ -87,7 +89,10 @@ func getRaftWithDir(
 	config.Raft.CommitTimeout = 5 * time.Millisecond
 	config.Raft.Bootstrap = bootstrap
 
-	r, err := NewBackend(raftDir, config)
+	db, err := bolt.New(raftDir)
+	require.NoError(t, err)
+
+	r, err := New(db, config)
 	require.NoError(t, err)
 
 	r.WaitForLeader(1 * time.Second)

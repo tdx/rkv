@@ -4,7 +4,7 @@ import (
 	"io"
 	"time"
 
-	dbApi "github.com/tdx/rkv/internal/db/api"
+	dbApi "github.com/tdx/rkv/db/api"
 
 	"github.com/boltdb/bolt"
 	"github.com/rboyer/safeio"

@@ -1,6 +1,6 @@
 package api
 
-import dbApi "github.com/tdx/rkv/internal/db/api"
+import dbApi "github.com/tdx/rkv/db/api"
 
 // Backend interface for disctributed database
 type Backend interface {

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tdx/rkv/internal/db/bolt"
+	"github.com/tdx/rkv/db/bolt"
 	remoteApi "github.com/tdx/rkv/internal/remote/api"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 	"github.com/tdx/rkv/internal/server"

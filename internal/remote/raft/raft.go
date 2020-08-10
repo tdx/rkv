@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tdx/rkv/internal/db/bolt"
+	dbApi "github.com/tdx/rkv/db/api"
 	remoteApi "github.com/tdx/rkv/internal/remote/api"
 
 	"github.com/gogo/protobuf/proto"
@@ -37,9 +37,9 @@ type Backend struct {
 	dataDir     string
 }
 
-// NewBackend ...
-func NewBackend(
-	dataDir string,
+// New ...
+func New(
+	db dbApi.Backend,
 	config Config) (*Backend, error) {
 
 	logger := config.Raft.Config.Logger
@@ -53,20 +53,18 @@ func NewBackend(
 	}
 
 	d := &Backend{
-		logger:  logger,
-		config:  config,
-		dataDir: dataDir,
+		logger: logger,
+		config: config,
 		fsm: &fsm{
 			id:     string(config.Raft.LocalID),
 			logger: logger.Named("fsm"),
+			db:     db,
 		},
 	}
 
-	if err := d.setupDb(dataDir); err != nil {
-		return nil, err
-	}
+	dir := filepath.Dir(db.DSN())
 
-	if err := d.setupRaft(dataDir); err != nil {
+	if err := d.setupRaft(dir); err != nil {
 		return nil, err
 	}
 
@@ -86,19 +84,6 @@ func (d *Backend) CommittedIndex() uint64 {
 // AppliedIndex returns the latest index applied to the FSM
 func (d *Backend) AppliedIndex() uint64 {
 	return d.raft.AppliedIndex()
-}
-
-func (d *Backend) setupDb(dataDir string) error {
-
-	fileName := filepath.Join(dataDir, "db", "bolt.db")
-	db, err := bolt.New(fileName)
-	if err != nil {
-		return err
-	}
-
-	d.fsm.db = db
-
-	return nil
 }
 
 func (d *Backend) setupRaft(dataDir string) error {

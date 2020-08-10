@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	dbApi "github.com/tdx/rkv/internal/db/api"
+	dbApi "github.com/tdx/rkv/db/api"
 
 	"github.com/boltdb/bolt"
 )
@@ -20,7 +20,7 @@ type svc struct {
 
 var _ dbApi.Backend = (*svc)(nil)
 
-// New returns dbApi.Db instance
+// New returns dbApi.Backend instance
 func New(dir string) (dbApi.Backend, error) {
 
 	db, err := open(dir)
@@ -120,6 +120,9 @@ func (s *svc) Delete(tab, key []byte) error {
 
 }
 
+//
+// dbApi.Closer umplementation
+//
 func (s *svc) Close() error {
 	return s.db.Close()
 }
@@ -165,7 +168,7 @@ func open(dir string) (*bolt.DB, error) {
 		return bolt.Open(name, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	}
 
-	// remote old files
+	// remove old files
 	for _, file := range files {
 		if file.IsDir() {
 			continue
@@ -173,7 +176,7 @@ func open(dir string) (*bolt.DB, error) {
 
 		if file.Name() != lastDbFile {
 			name := filepath.Join(dir, file.Name())
-			err = os.Remove(name)
+			_ = os.Remove(name)
 		}
 	}
 

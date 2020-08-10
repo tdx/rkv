@@ -1,5 +1,9 @@
 package api
 
+import (
+	dbApi "github.com/tdx/rkv/db/api"
+)
+
 // Config to create client
 type Config struct {
 	NodeName string
@@ -12,6 +16,6 @@ type Config struct {
 	DistributedPort int
 	// LogLevel: error | warn | info | debug | trace
 	LogLevel string
-	// Database directory
-	DataDir string
+	// Backend
+	Backend dbApi.Backend
 }
