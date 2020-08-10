@@ -111,7 +111,7 @@ func TestBackupRestore(t *testing.T) {
 	require.Equal(t, val, v)
 
 	tmpFile, err := ioutil.TempFile("", "rkv-bk-*")
-	// defer os.Remove(tmpFile.Name())
+	defer os.Remove(tmpFile.Name())
 
 	t.Log("backup db to:", tmpFile.Name())
 

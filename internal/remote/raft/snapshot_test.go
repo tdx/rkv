@@ -2,6 +2,7 @@ package raft
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"hash/crc64"
 	"io"
@@ -11,16 +12,26 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tdx/rkv/db/bolt"
-
 	"github.com/hashicorp/raft"
 	"github.com/stretchr/testify/require"
+	dbApi "github.com/tdx/rkv/db/api"
+	"github.com/tdx/rkv/db/bolt"
+	"github.com/tdx/rkv/db/gmap"
 	"github.com/travisjeffery/go-dynaport"
 )
 
-func TestRaftSnapshot(t *testing.T) {
-	raft1, dir1 := getRaft(t, "1", true)
-	raft2, dir2 := getRaft(t, "2", false)
+func TestRaftSnapshotBolt(t *testing.T) {
+	runSnap(t, "bolt")
+}
+
+func TestRaftSnapshotMap(t *testing.T) {
+	// failed now
+	runSnap(t, "gmap")
+}
+
+func runSnap(t *testing.T, bkTyp string) {
+	raft1, dir1 := getRaft(t, "1", true, bkTyp)
+	raft2, dir2 := getRaft(t, "2", false, bkTyp)
 	// raft3, dir3 := getRaft(t, "3", false)
 	defer os.RemoveAll(dir1)
 	defer os.RemoveAll(dir2)
@@ -38,7 +49,7 @@ func TestRaftSnapshot(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	dbHash1 := mkDbHash(t, raft1)
+	dbHash1 := mkSnapshotHash(t, raft1)
 
 	// Add raft2 to the cluster
 	addPeer(t, raft1, raft2)
@@ -55,7 +66,8 @@ func TestRaftSnapshot(t *testing.T) {
 func getRaft(
 	t testing.TB,
 	id string,
-	bootstrap bool) (*Backend, string) {
+	bootstrap bool,
+	bkTyp string) (*Backend, string) {
 
 	raftDir, err := ioutil.TempDir("", "rkv-raft-")
 	if err != nil {
@@ -63,14 +75,15 @@ func getRaft(
 	}
 	t.Log("raft dir:", raftDir)
 
-	return getRaftWithDir(t, id, bootstrap, raftDir)
+	return getRaftWithDir(t, id, bootstrap, raftDir, bkTyp)
 }
 
 func getRaftWithDir(
 	t testing.TB,
 	id string,
 	bootstrap bool,
-	raftDir string) (*Backend, string) {
+	raftDir string,
+	bkTyp string) (*Backend, string) {
 
 	ports := dynaport.Get(1)
 
@@ -89,13 +102,21 @@ func getRaftWithDir(
 	config.Raft.CommitTimeout = 5 * time.Millisecond
 	config.Raft.Bootstrap = bootstrap
 
-	db, err := bolt.New(raftDir)
+	var db dbApi.Backend
+	switch bkTyp {
+	case "gmap":
+		db, err = gmap.New(raftDir)
+	default:
+		db, err = bolt.New(raftDir)
+	}
 	require.NoError(t, err)
 
 	r, err := New(db, config)
 	require.NoError(t, err)
 
-	r.WaitForLeader(1 * time.Second)
+	if bootstrap {
+		r.WaitForLeader(3 * time.Second)
+	}
 
 	return r, raftDir
 }
@@ -129,7 +150,7 @@ func ensureCommitApplied(
 	}
 }
 
-func mkDbHash(t *testing.T, raft *Backend) []byte {
+func mkSnapshotHash(t *testing.T, raft *Backend) []byte {
 
 	snapFuture := raft.raft.Snapshot()
 	require.NoError(t, snapFuture.Error())
@@ -143,15 +164,20 @@ func mkDbHash(t *testing.T, raft *Backend) []byte {
 	stateHash := crc64.New(crc64.MakeTable(crc64.ECMA))
 
 	// Compute the hash
-	_, err = io.Copy(stateHash, reader)
+	n, err := io.Copy(stateHash, reader)
 	require.NoError(t, err)
+	require.True(t, n > 0)
 
-	return stateHash.Sum(nil)
+	hash := stateHash.Sum(nil)
+
+	raft.logger.Info("snapshot", "bytes", n, "hash", hex.EncodeToString(hash))
+
+	return hash
 }
 
 func mkDbBackupHash(t *testing.T, raft *Backend) []byte {
 	tmpFile, err := ioutil.TempFile("/tmp", "rkv-bk-*")
-	defer os.Remove(tmpFile.Name())
+	// defer os.Remove(tmpFile.Name())
 
 	require.NoError(t, err)
 
@@ -165,8 +191,13 @@ func mkDbBackupHash(t *testing.T, raft *Backend) []byte {
 	stateHash := crc64.New(crc64.MakeTable(crc64.ECMA))
 
 	// Compute the hash
-	_, err = io.Copy(stateHash, snapFile)
+	n, err := io.Copy(stateHash, snapFile)
 	require.NoError(t, err)
+	require.True(t, n > 0)
 
-	return stateHash.Sum(nil)
+	hash := stateHash.Sum(nil)
+
+	raft.logger.Info("backup", "bytes", n, "hash", hex.EncodeToString(hash))
+
+	return hash
 }

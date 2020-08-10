@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/tdx/rkv/db/bolt"
+	"github.com/tdx/rkv/db/gmap"
 	"github.com/tdx/rkv/internal/agent"
 
 	log "github.com/hashicorp/go-hclog"
@@ -24,7 +25,8 @@ func TestAgent(t *testing.T) {
 		dataDir, err := ioutil.TempDir("", "agent-test")
 		require.NoError(t, err)
 
-		db, err := bolt.New(dataDir)
+		// db, err := bolt.New(dataDir)
+		db, err := gmap.New(dataDir)
 		require.NoError(t, err)
 
 		var startJoinAddrs []string
@@ -59,7 +61,7 @@ func TestAgent(t *testing.T) {
 	}
 	defer func() {
 		for _, agent := range agents {
-			dir := agent.Config.Backend.DSN()
+			dir := filepath.Dir(agent.Config.Backend.DSN())
 
 			err := agent.Shutdown()
 			require.NoError(t, err)
@@ -89,6 +91,4 @@ func TestAgent(t *testing.T) {
 	followerVal, err := followerClient.Get(tab, key)
 	require.NoError(t, err)
 	require.Equal(t, val, followerVal)
-
-	require.True(t, false)
 }

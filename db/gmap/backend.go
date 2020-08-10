@@ -1,6 +1,7 @@
 package gmap
 
 import (
+	"path/filepath"
 	"reflect"
 	"sync"
 	"unsafe"
@@ -21,7 +22,7 @@ var _ dbApi.Backend = (*svc)(nil)
 // New returns dbApi.Backend instance
 func New(dir string) (dbApi.Backend, error) {
 	return &svc{
-		dir:  dir,
+		dir:  filepath.Join(dir, "inmem"),
 		tabs: make(map[string]table),
 	}, nil
 }

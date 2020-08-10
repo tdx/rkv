@@ -13,7 +13,7 @@ var _ dbApi.Restorer = (*svc)(nil)
 // dbApi.Restorer interface implementation
 //
 
-// Restore bolt file from reader
+// Restore map from reader
 func (s *svc) Restore(r io.ReadCloser) error {
 
 	var tabs map[string]table

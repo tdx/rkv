@@ -179,7 +179,9 @@ func (d *Backend) WaitForLeader(timeout time.Duration) error {
 		case <-timeoutc:
 			return fmt.Errorf("wait for leader timed out")
 		case <-ticker.C:
-			if l := d.raft.Leader(); l != "" {
+			l := d.raft.Leader()
+			d.logger.Info("wait for leader", "leader", l)
+			if l != "" {
 				return nil
 			}
 		}

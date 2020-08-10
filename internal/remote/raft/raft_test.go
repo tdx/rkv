@@ -10,6 +10,7 @@ import (
 
 	dbApi "github.com/tdx/rkv/db/api"
 	"github.com/tdx/rkv/db/bolt"
+	"github.com/tdx/rkv/db/gmap"
 	rRaft "github.com/tdx/rkv/internal/remote/raft"
 
 	"github.com/hashicorp/raft"
@@ -17,7 +18,15 @@ import (
 	"github.com/travisjeffery/go-dynaport"
 )
 
-func TestNodes(t *testing.T) {
+func TestNodesBolt(t *testing.T) {
+	run(t, "bolt")
+}
+
+func TestNodesMap(t *testing.T) {
+	run(t, "gmap")
+}
+
+func run(t *testing.T, bkType string) {
 	var nodes []*rRaft.Backend
 	nodeCount := 3
 	ports := dynaport.Get(nodeCount)
@@ -49,7 +58,13 @@ func TestNodes(t *testing.T) {
 			config.Raft.Bootstrap = true
 		}
 
-		db, err := bolt.New(dataDir)
+		var db dbApi.Backend
+		switch bkType {
+		case "gmap":
+			db, err = gmap.New(dataDir)
+		default:
+			db, err = bolt.New(dataDir)
+		}
 		require.NoError(t, err)
 
 		node, err := rRaft.New(db, config)
