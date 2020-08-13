@@ -97,6 +97,9 @@ func (a *Agent) setupDistributed() error {
 	}
 
 	a.raftDb, err = rbk.New(a.Config.Backend, config)
+	if err != nil {
+		return err
+	}
 	if a.Config.Bootstrap {
 		return a.raftDb.(remoteApi.Leader).WaitForLeader(3 * time.Second)
 	}
