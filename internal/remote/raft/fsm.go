@@ -58,7 +58,7 @@ func (f *fsm) Restore(r io.ReadCloser) error {
 }
 
 //
-func (f *fsm) applyData(req rpcRaft.LogData) error {
+func (f *fsm) applyData(req rpcRaft.LogData) interface{} {
 	var err error
 	for _, cmd := range req.Operations {
 		switch cmd.OpType {
@@ -66,6 +66,12 @@ func (f *fsm) applyData(req rpcRaft.LogData) error {
 			err = f.db.Put(cmd.Tab, cmd.Key, cmd.Val)
 		case deleteOp:
 			err = f.db.Delete(cmd.Tab, cmd.Key)
+		case getOp:
+			val, err := f.db.Get(cmd.Tab, cmd.Key)
+			if err != nil {
+				return err
+			}
+			return val
 		default:
 			err = fmt.Errorf("%q is not supported operation", cmd.OpType)
 		}

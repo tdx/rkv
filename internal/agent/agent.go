@@ -74,6 +74,27 @@ func (a *Agent) setupDistributed() error {
 	config.Raft.StreamLayer = rbk.NewStreamLayer(ln)
 	config.Raft.Bootstrap = a.Config.Bootstrap
 	config.Raft.Config.Logger = a.logger.Named("raft")
+	if a.Config.Raft.CommitTimeout > 0 {
+		config.Raft.CommitTimeout = a.Config.Raft.CommitTimeout
+	}
+	if a.Config.Raft.ElectionTimeout > 0 {
+		config.Raft.ElectionTimeout = a.Config.Raft.ElectionTimeout
+	}
+	if a.Config.Raft.HeartbeatTimeout > 0 {
+		config.Raft.HeartbeatTimeout = a.Config.Raft.HeartbeatTimeout
+	}
+	if a.Config.Raft.LeaderLeaseTimeout > 0 {
+		config.Raft.LeaderLeaseTimeout = a.Config.Raft.LeaderLeaseTimeout
+	}
+	if a.Config.Raft.MaxAppendEntries > 0 {
+		config.Raft.MaxAppendEntries = a.Config.Raft.MaxAppendEntries
+	}
+	if a.Config.Raft.SnapshotInterval > 0 {
+		config.Raft.SnapshotInterval = a.Config.Raft.SnapshotInterval
+	}
+	if a.Config.Raft.SnapshotThreshold > 0 {
+		config.Raft.SnapshotThreshold = a.Config.Raft.SnapshotThreshold
+	}
 
 	a.raftDb, err = rbk.New(a.Config.Backend, config)
 	if a.Config.Bootstrap {

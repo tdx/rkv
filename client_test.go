@@ -40,7 +40,7 @@ func run(t *testing.T, bkType string) {
 	case "gmap":
 		db, err = gmap.New(dataDir)
 	case "bitcask":
-		db, err = bitcask.New(dataDir)
+		db, err = bitcask.New(dataDir, 1<<20) // 1 MB
 	default:
 		db, err = bolt.New(dataDir)
 	}
@@ -70,13 +70,15 @@ func run(t *testing.T, bkType string) {
 	err = client.Put(tab, key, val)
 	require.NoError(t, err)
 
-	v, err := client.Get(tab, key)
+	v, err := client.Get(api.ReadAny, tab, key)
 	require.Equal(t, val, v)
 
 	err = client.Delete(tab, key)
 	require.NoError(t, err)
 
-	_, err = client.Get(tab, key)
-	require.Error(t, err)
+	v, err = client.Get(api.ReadRaft, tab, key)
+	t.Log("v:", v, "err:", err)
+	require.Equal(t, true, dbApi.IsNoKeyError(err))
+	require.Nil(t, v)
 
 }

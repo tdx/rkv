@@ -17,9 +17,6 @@ func (d *Backend) Join(id, addr string) error {
 
 	d.logger.Debug("JOIN from", "id", id, "addr", addr)
 
-	d.l.RLock()
-	defer d.l.RUnlock()
-
 	if !d.IsLeader() {
 		d.logger.Debug(
 			"JOIN from", "id", id, "addr", addr, "skip", "not leader")
@@ -63,9 +60,6 @@ func (d *Backend) Join(id, addr string) error {
 func (d *Backend) Leave(id, addr string) error {
 
 	d.logger.Debug("LEAVE from", "id", id, "addr", addr)
-
-	d.l.RLock()
-	defer d.l.RUnlock()
 
 	if !d.IsLeader() {
 		d.logger.Debug(

@@ -2,7 +2,6 @@ package agent
 
 import (
 	"github.com/tdx/rkv/api"
-
 	remoteApi "github.com/tdx/rkv/internal/remote/api"
 )
 
@@ -18,8 +17,10 @@ func (a *Agent) Put(tab, key, value []byte) error {
 }
 
 // Get ...
-func (a *Agent) Get(tab, key []byte) ([]byte, error) {
-	return a.raftDb.Get(tab, key)
+func (a *Agent) Get(
+	lvl api.ConsistencyLevel, tab, key []byte) ([]byte, error) {
+
+	return a.raftDb.Get(lvl, tab, key)
 }
 
 // Delete ...

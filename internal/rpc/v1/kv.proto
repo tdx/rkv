@@ -23,8 +23,9 @@ message StoragePutReply {
 }
 
 message StorageGetArgs {
-    bytes tab = 1;
-    bytes key = 2;
+    int32 lvl = 1; // consistency level
+    bytes tab = 2;
+    bytes key = 3;
 }
 
 message StorageGetReply {

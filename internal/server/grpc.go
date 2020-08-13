@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	rkvApi "github.com/tdx/rkv/api"
 	remoteApi "github.com/tdx/rkv/internal/remote/api"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 
@@ -54,7 +55,7 @@ func (s *grpcServer) Get(
 	ctx context.Context,
 	req *rpcApi.StorageGetArgs) (*rpcApi.StorageGetReply, error) {
 
-	val, err := s.Db.Get(req.Tab, req.Key)
+	val, err := s.Db.Get(rkvApi.ConsistencyLevel(req.Lvl), req.Tab, req.Key)
 	if err != nil {
 		return &rpcApi.StorageGetReply{Val: nil, Err: err.Error()}, err
 	}

@@ -14,8 +14,14 @@ type svc struct {
 var _ dbApi.Backend = (*svc)(nil)
 
 // New returns dbApi.Backend instance
-func New(dir string) (dbApi.Backend, error) {
-	db, err := bitcask.Open(dir)
+func New(
+	dir string,
+	maxDatafileSize int) (dbApi.Backend, error) {
+
+	db, err := bitcask.Open(
+		dir,
+		bitcask.WithMaxDatafileSize(maxDatafileSize),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -34,14 +40,21 @@ func (s *svc) DSN() string {
 	return s.db.Path()
 }
 
+// tab ignored for bitcask
 func (s *svc) Put(tab, key, value []byte) error {
 	return s.db.Put(key, value)
 }
 
+// tab ignored for bitcask
 func (s *svc) Get(tab, key []byte) ([]byte, error) {
-	return s.db.Get(key)
+	r, err := s.db.Get(key)
+	if err == bitcask.ErrKeyNotFound {
+		return nil, dbApi.ErrNoKey(key)
+	}
+	return r, err
 }
 
+// tab ignored for bitcask
 func (s *svc) Delete(tab, key []byte) error {
 	return s.db.Delete(key)
 }

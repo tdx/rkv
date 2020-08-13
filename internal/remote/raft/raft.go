@@ -5,7 +5,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	dbApi "github.com/tdx/rkv/db/api"
@@ -14,7 +13,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	log "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/raft"
-	raftboltdb "github.com/hashicorp/raft-boltdb"
 	raftldb "github.com/tidwall/raft-leveldb"
 )
 
@@ -28,7 +26,6 @@ var _ remoteApi.Backend = (*Backend)(nil)
 type Backend struct {
 	logger log.Logger
 	config Config
-	l      sync.RWMutex
 	fsm    *fsm
 
 	raft        *raft.Raft
@@ -130,22 +127,28 @@ func (d *Backend) setupRaft(dataDir string) error {
 
 	config := raft.DefaultConfig()
 	config.LocalID = d.config.Raft.LocalID
-	if d.config.Raft.HeartbeatTimeout != 0 {
-		config.HeartbeatTimeout = d.config.Raft.HeartbeatTimeout
-	}
-	if d.config.Raft.ElectionTimeout != 0 {
-		config.ElectionTimeout = d.config.Raft.ElectionTimeout
-	}
-	if d.config.Raft.LeaderLeaseTimeout != 0 {
-		config.LeaderLeaseTimeout = d.config.Raft.LeaderLeaseTimeout
-	}
-	if d.config.Raft.CommitTimeout != 0 {
+	if d.config.Raft.CommitTimeout > 0 {
 		config.CommitTimeout = d.config.Raft.CommitTimeout
 	}
+	if d.config.Raft.ElectionTimeout > 0 {
+		config.ElectionTimeout = d.config.Raft.ElectionTimeout
+	}
+	if d.config.Raft.HeartbeatTimeout > 0 {
+		config.HeartbeatTimeout = d.config.Raft.HeartbeatTimeout
+	}
+	if d.config.Raft.LeaderLeaseTimeout > 0 {
+		config.LeaderLeaseTimeout = d.config.Raft.LeaderLeaseTimeout
+	}
+	if d.config.Raft.MaxAppendEntries > 0 {
+		config.MaxAppendEntries = d.config.Raft.MaxAppendEntries
+	}
+	if d.config.Raft.SnapshotInterval > 0 {
+		config.SnapshotInterval = d.config.Raft.SnapshotInterval
+	}
+	if d.config.Raft.SnapshotThreshold > 0 {
+		config.SnapshotThreshold = d.config.Raft.SnapshotThreshold
+	}
 	config.Logger = d.logger
-
-	d.l.Lock()
-	defer d.l.Unlock()
 
 	d.raft, err = raft.NewRaft(
 		config,
@@ -193,14 +196,11 @@ func (d *Backend) WaitForLeader(timeout time.Duration) error {
 
 // Close ...
 func (d *Backend) Close() error {
-	d.l.Lock()
-	defer d.l.Unlock()
-
 	if err := d.fsm.Close(); err != nil {
 		return err
 	}
 
-	if err := d.stableStore.(*raftboltdb.BoltStore).Close(); err != nil {
+	if err := d.stableStore.(*raftldb.LevelDBStore).Close(); err != nil {
 		return err
 	}
 
@@ -215,14 +215,15 @@ func (d *Backend) applyLog(req proto.Marshaler) (interface{}, error) {
 	}
 
 	future := d.raft.Apply(b, 0)
-	if future.Error() != nil {
-		return nil, fmt.Errorf(
-			"%s apply failed: %v", d.logger.Name(), future.Error())
+	if err := future.Error(); err != nil {
+		d.logger.Error("applyLog", "call error", err)
+		return nil, err
 	}
 
 	res := future.Response()
 	if err, ok := res.(error); ok {
-		return nil, fmt.Errorf("%s apply failed: %v", d.logger.Name(), err)
+		d.logger.Error("applyLog", "result error", err)
+		return nil, err
 	}
 
 	return res, nil

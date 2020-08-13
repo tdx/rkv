@@ -7,10 +7,12 @@ import (
 	dbApi "github.com/tdx/rkv/db/api"
 
 	log "github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/raft"
 )
 
 // Config ...
 type Config struct {
+	Raft     raft.Config
 	Logger   log.Logger
 	BindAddr string // Serf, Raft, RPC address. Serf with port
 	RPCPort  int    // rpc API server

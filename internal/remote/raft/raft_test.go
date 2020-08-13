@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	rkvApi "github.com/tdx/rkv/api"
 	dbApi "github.com/tdx/rkv/db/api"
 	"github.com/tdx/rkv/db/bitcask"
 	"github.com/tdx/rkv/db/bolt"
@@ -68,7 +69,7 @@ func run(t *testing.T, bkType string) {
 		case "gmap":
 			db, err = gmap.New(dataDir)
 		case "bitcask":
-			db, err = bitcask.New(dataDir)
+			db, err = bitcask.New(dataDir, 1<<20) // 1 MB
 		default:
 			db, err = bolt.New(dataDir)
 		}
@@ -111,7 +112,7 @@ func run(t *testing.T, bkType string) {
 
 		require.Eventually(t, func() bool {
 			for j := 0; j < nodeCount; j++ {
-				got, err := nodes[j].Get(tab, record.Key)
+				got, err := nodes[j].Get(rkvApi.ReadAny, tab, record.Key)
 				if err != nil {
 					return false
 				}
@@ -132,11 +133,13 @@ func run(t *testing.T, bkType string) {
 
 	time.Sleep(50 * time.Millisecond)
 
-	v3, err := nodes[1].Get(tab, key3)
+	// not a leader, use ReadAny
+	v3, err := nodes[1].Get(rkvApi.ReadAny, tab, key3)
+	t.Log("v3:", v3, "err:", err)
 	require.Equal(t, true, dbApi.IsNoKeyError(err))
 	require.Nil(t, v3)
 
-	v3, err = nodes[2].Get(tab, key3)
+	v3, err = nodes[2].Get(rkvApi.ReadAny, tab, key3)
 	require.NoError(t, err)
 	require.Equal(t, val3, v3)
 

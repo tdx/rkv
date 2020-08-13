@@ -2,10 +2,15 @@ package api
 
 import (
 	dbApi "github.com/tdx/rkv/db/api"
+
+	"github.com/hashicorp/raft"
 )
 
 // Config to create client
 type Config struct {
+	// Raft config
+	Raft raft.Config
+	// NodeName
 	NodeName string
 	// Membership ip:port used by Serf to discover nodes and create cluster
 	DiscoveryAddr string

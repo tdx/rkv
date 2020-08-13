@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	rkvApi "github.com/tdx/rkv/api"
 	dbApi "github.com/tdx/rkv/db/api"
 	"github.com/tdx/rkv/db/bitcask"
 	"github.com/tdx/rkv/db/bolt"
@@ -45,7 +46,7 @@ func runAgent(t *testing.T, bkType string) {
 		case "gmap":
 			db, err = gmap.New(dataDir)
 		case "bitcask":
-			db, err = bitcask.New(dataDir)
+			db, err = bitcask.New(dataDir, 1<<20) // 1 MB
 		default:
 			db, err = bolt.New(dataDir)
 		}
@@ -102,7 +103,7 @@ func runAgent(t *testing.T, bkType string) {
 	err := leaderClient.Put(tab, key, val)
 	require.NoError(t, err)
 
-	v, err := leaderClient.Get(tab, key)
+	v, err := leaderClient.Get(rkvApi.ReadRaft, tab, key)
 	require.NoError(t, err)
 	require.Equal(t, v, val)
 
@@ -110,7 +111,7 @@ func runAgent(t *testing.T, bkType string) {
 	time.Sleep(3 * time.Second)
 
 	followerClient := agents[1]
-	followerVal, err := followerClient.Get(tab, key)
+	followerVal, err := followerClient.Get(rkvApi.ReadAny, tab, key)
 	require.NoError(t, err)
 	require.Equal(t, val, followerVal)
 }
