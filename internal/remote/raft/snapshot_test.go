@@ -93,7 +93,7 @@ func getRaftWithDir(
 	)
 	require.NoError(t, err)
 
-	config := Config{}
+	config := &Config{}
 	config.Raft.StreamLayer = NewStreamLayer(ln)
 	config.Raft.LocalID = raft.ServerID(id)
 	config.Raft.HeartbeatTimeout = 50 * time.Millisecond

@@ -25,7 +25,7 @@ var _ remoteApi.Backend = (*Backend)(nil)
 // Backend ...
 type Backend struct {
 	logger log.Logger
-	config Config
+	config *Config
 	fsm    *fsm
 
 	raft        *raft.Raft
@@ -33,21 +33,24 @@ type Backend struct {
 	logStore    raft.LogStore
 	stableStore raft.StableStore
 	dataDir     string
+	restarted   bool
 }
 
 // New ...
 func New(
 	db dbApi.Backend,
-	config Config) (*Backend, error) {
+	config *Config) (*Backend, error) {
 
 	logger := config.Raft.Config.Logger
 
 	if logger == nil {
 		logger = log.New(&log.LoggerOptions{
 			Name:  fmt.Sprintf("raft-%s", config.Raft.LocalID),
-			Level: log.Debug,
+			Level: log.Error,
 		})
 		config.Raft.Config.Logger = logger
+	} else {
+		logger = logger.Named(fmt.Sprintf("raft-%s", config.Raft.LocalID))
 	}
 
 	d := &Backend{
@@ -95,7 +98,7 @@ func (d *Backend) setupRaft(dataDir string) error {
 	// Create the backend raft store for logs and stable storage.
 	// store, err := raftboltdb.NewBoltStore(filepath.Join(path, "raft.db"))
 	store, err := raftldb.NewLevelDBStore(
-		filepath.Join(path, "stable/wal.log"), raftldb.High)
+		filepath.Join(path, "stable"), raftldb.High)
 	if err != nil {
 		return err
 	}
@@ -150,6 +153,9 @@ func (d *Backend) setupRaft(dataDir string) error {
 	}
 	config.Logger = d.logger
 
+	d.restarted, err = raft.HasExistingState(
+		d.logStore, d.stableStore, d.snapStore)
+
 	d.raft, err = raft.NewRaft(
 		config,
 		d.fsm,
@@ -169,10 +175,16 @@ func (d *Backend) setupRaft(dataDir string) error {
 				Address: transport.LocalAddr(),
 			}},
 		}
-		err = d.raft.BootstrapCluster(config).Error()
+		// error can be safety ignored
+		d.raft.BootstrapCluster(config).Error()
 	}
 
 	return err
+}
+
+// Restarted check node has state
+func (d *Backend) Restarted() bool {
+	return d.restarted
 }
 
 // WaitForLeader ...

@@ -69,7 +69,7 @@ func (a *Agent) setupDistributed() error {
 		return err
 	}
 
-	config := rbk.Config{}
+	config := &rbk.Config{}
 	config.Raft.LocalID = config.ServerID(a.Config.NodeName)
 	config.Raft.StreamLayer = rbk.NewStreamLayer(ln)
 	config.Raft.Bootstrap = a.Config.Bootstrap
