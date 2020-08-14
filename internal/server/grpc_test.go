@@ -2,16 +2,22 @@ package server_test
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
-	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/hashicorp/raft"
+	dbApi "github.com/tdx/rkv/db/api"
 	"github.com/tdx/rkv/db/bolt"
+	"github.com/tdx/rkv/db/gmap"
 	remoteApi "github.com/tdx/rkv/internal/remote/api"
+	rRaft "github.com/tdx/rkv/internal/remote/raft"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 	"github.com/tdx/rkv/internal/server"
+	"github.com/travisjeffery/go-dynaport"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -49,14 +55,10 @@ func setupTest(
 	cc, err := grpc.Dial(l.Addr().String(), clientOptions...)
 	require.NoError(t, err)
 
-	dir, err := ioutil.TempDir("", "server-test")
-	require.NoError(t, err)
-
-	db, err := bolt.New(filepath.Join(dir, "bolt.db"))
-	require.NoError(t, err)
+	raft, dir := getRaft(t, "1", true, "bolt")
 
 	config := &server.Config{
-		Db: db.(remoteApi.Backend),
+		Db: raft,
 	}
 
 	if fn != nil {
@@ -76,7 +78,7 @@ func setupTest(
 		server.Stop()
 		cc.Close()
 		l.Close()
-		db.Close()
+		raft.Close()
 		func() {
 			os.RemoveAll(dir)
 		}()
@@ -111,4 +113,65 @@ func testPutGet(
 	require.NoError(t, err)
 	require.Equal(t, "", getReply.Err)
 	require.Equal(t, val, getReply.Val)
+}
+
+//
+//
+//
+func getRaft(
+	t testing.TB,
+	id string,
+	bootstrap bool,
+	bkTyp string) (remoteApi.Backend, string) {
+
+	raftDir, err := ioutil.TempDir("", "rkv-raft-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("raft dir:", raftDir)
+
+	return getRaftWithDir(t, id, bootstrap, raftDir, bkTyp)
+}
+
+func getRaftWithDir(
+	t testing.TB,
+	id string,
+	bootstrap bool,
+	raftDir string,
+	bkTyp string) (remoteApi.Backend, string) {
+
+	ports := dynaport.Get(1)
+
+	ln, err := net.Listen(
+		"tcp",
+		fmt.Sprintf("127.0.0.1:%d", ports[0]),
+	)
+	require.NoError(t, err)
+
+	config := &rRaft.Config{}
+	config.Raft.StreamLayer = rRaft.NewStreamLayer(ln)
+	config.Raft.LocalID = raft.ServerID(id)
+	config.Raft.HeartbeatTimeout = 50 * time.Millisecond
+	config.Raft.ElectionTimeout = 50 * time.Millisecond
+	config.Raft.LeaderLeaseTimeout = 50 * time.Millisecond
+	config.Raft.CommitTimeout = 5 * time.Millisecond
+	config.Raft.Bootstrap = bootstrap
+
+	var db dbApi.Backend
+	switch bkTyp {
+	case "gmap":
+		db, err = gmap.New(raftDir)
+	default:
+		db, err = bolt.New(raftDir)
+	}
+	require.NoError(t, err)
+
+	r, err := rRaft.New(db, config)
+	require.NoError(t, err)
+
+	if bootstrap {
+		r.WaitForLeader(3 * time.Second)
+	}
+
+	return r, raftDir
 }
