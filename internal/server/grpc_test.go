@@ -26,25 +26,24 @@ import (
 //
 // It writes direct to dbApi.Backend instead of remoteApi.Backend
 //
-func TestServer(t *testing.T) {
+func TestGrpsServer(t *testing.T) {
 	for scenario, fn := range map[string]func(
 		t *testing.T,
 		client rpcApi.StorageClient,
 		config *server.Config,
 	){
-		"put/get key-value pair succeeds": testPutGet,
+		"put/get key-value pair over GRPC succeeds": testGrpcPutGet,
 	} {
 		t.Run(scenario, func(t *testing.T) {
-			client, config, teardown := setupTest(t, nil)
+			client, config, teardown := setupGrpcTest(t)
 			defer teardown()
 			fn(t, client, config)
 		})
 	}
 }
 
-func setupTest(
-	t *testing.T,
-	fn func(*server.Config)) (rpcApi.StorageClient, *server.Config, func()) {
+func setupGrpcTest(
+	t *testing.T) (rpcApi.StorageClient, *server.Config, func()) {
 
 	t.Helper()
 
@@ -59,10 +58,6 @@ func setupTest(
 
 	config := &server.Config{
 		Db: raft,
-	}
-
-	if fn != nil {
-		fn(config)
 	}
 
 	server, err := server.NewGRPCServer(config)
@@ -85,7 +80,7 @@ func setupTest(
 	}
 }
 
-func testPutGet(
+func testGrpcPutGet(
 	t *testing.T,
 	client rpcApi.StorageClient,
 	config *server.Config) {

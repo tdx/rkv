@@ -36,6 +36,18 @@ func NewGRPCServer(config *Config) (*grpc.Server, error) {
 }
 
 func newGrpcServer(config *Config) (*grpcServer, error) {
+	// check logger
+	logger := config.Logger
+	if logger == nil {
+		logger = log.New(&log.LoggerOptions{
+			Name:  "http",
+			Level: log.Error,
+		})
+	} else {
+		logger = logger.Named("http")
+	}
+	config.Logger = logger
+
 	return &grpcServer{Config: config}, nil
 }
 

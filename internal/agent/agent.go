@@ -1,8 +1,10 @@
 package agent
 
 import (
+	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"sync"
 	"time"
 
@@ -21,7 +23,8 @@ type Agent struct {
 
 	logger     log.Logger
 	raftDb     remoteApi.Backend
-	server     *grpc.Server
+	grpcServer *grpc.Server
+	httpServer *http.Server
 	membership *discovery.Membership
 
 	shutdown     bool
@@ -47,7 +50,8 @@ func New(config *Config) (*Agent, error) {
 
 	setup := []func() error{
 		a.setupDistributed,
-		a.setupServer,
+		a.setupGrpcServer,
+		a.setupHTTPServer,
 		a.setupMembership,
 	}
 	for _, fn := range setup {
@@ -106,13 +110,13 @@ func (a *Agent) setupDistributed() error {
 	return err
 }
 
-func (a *Agent) setupServer() error {
+func (a *Agent) setupGrpcServer() error {
 	config := &server.Config{
 		Db: a.raftDb,
 	}
 
 	var err error
-	a.server, err = server.NewGRPCServer(config)
+	a.grpcServer, err = server.NewGRPCServer(config)
 	if err != nil {
 		return err
 	}
@@ -127,10 +131,47 @@ func (a *Agent) setupServer() error {
 	}
 
 	go func() {
-		if err := a.server.Serve(ln); err != nil {
+		if err := a.grpcServer.Serve(ln); err != nil {
 			_ = a.Shutdown()
+			a.logger.Info("GRPC server stopped", "error", err)
 		}
 	}()
+
+	a.logger.Info("GRPC server started", "address", rpcAddr)
+
+	return nil
+}
+
+func (a *Agent) setupHTTPServer() error {
+	if a.Config.BindHTTP == "" {
+		a.logger.Info("skip start HTTP server", "BindHTTP", "empty")
+		return nil
+	}
+
+	config := &server.Config{
+		Db:     a.raftDb,
+		Logger: a.logger,
+	}
+
+	var err error
+	a.httpServer, err = server.NewHTTPServer(config)
+	if err != nil {
+		return err
+	}
+
+	ln, err := net.Listen("tcp", a.Config.BindHTTP)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		if err := a.httpServer.Serve(ln); err != nil {
+			_ = a.Shutdown()
+			a.logger.Info("HTTP server stopped", "error", err)
+		}
+	}()
+
+	a.logger.Info("HTTP server started", "address", a.Config.BindHTTP)
 
 	return nil
 }
@@ -172,8 +213,16 @@ func (a *Agent) Shutdown() error {
 	shutdown := []func() error{
 		a.membership.Leave,
 		func() error {
-			a.server.GracefulStop()
+			a.grpcServer.GracefulStop()
 			return nil
+		},
+		func() error {
+			ctx, cancel := context.WithTimeout(
+				context.Background(), 5*time.Second)
+			defer func() {
+				cancel()
+			}()
+			return a.httpServer.Shutdown(ctx)
 		},
 		a.raftDb.Close,
 	}

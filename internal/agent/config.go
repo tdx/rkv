@@ -16,6 +16,7 @@ type Config struct {
 	Logger   log.Logger
 	BindAddr string // Serf, Raft, RPC address. Serf with port
 	RPCPort  int    // rpc API server
+	BindHTTP string // bind address for HTTP server
 	RaftPort int
 	Backend  dbApi.Backend
 	NodeName string // Raft server ID
