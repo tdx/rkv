@@ -6,12 +6,10 @@ import (
 
 // Config for distributed Db
 type Config struct {
-	Raft struct {
-		raft.Config
-		BindAddr    string
-		StreamLayer *StreamLayer
-		Bootstrap   bool
-	}
+	Raft        raft.Config
+	BindAddr    string
+	StreamLayer *StreamLayer
+	Bootstrap   bool
 }
 
 // ServerID returns raft.ServerID from string

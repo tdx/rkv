@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -36,12 +37,19 @@ func New(config *Config) (*Agent, error) {
 
 	logger := config.Logger
 	if logger == nil {
+		logLevel := log.LevelFromString(config.Raft.LogLevel)
+		if logLevel == log.NoLevel {
+			logLevel = log.Error
+		}
 		logger = log.New(&log.LoggerOptions{
 			Name:  fmt.Sprintf("agent-%s", config.NodeName),
-			Level: log.Error,
+			Level: logLevel,
 		})
-		config.Logger = logger
 	}
+	config.Logger = logger
+
+	logger.Info("rkvd", "node-name", config.NodeName)
+	logger.Info("rkvd", "data-dir", filepath.Dir(config.Backend.DSN()))
 
 	a := &Agent{
 		Config: config,
@@ -49,7 +57,7 @@ func New(config *Config) (*Agent, error) {
 	}
 
 	setup := []func() error{
-		a.setupDistributed,
+		a.setupRaft,
 		a.setupGrpcServer,
 		a.setupHTTPServer,
 		a.setupMembership,
@@ -62,7 +70,7 @@ func New(config *Config) (*Agent, error) {
 	return a, nil
 }
 
-func (a *Agent) setupDistributed() error {
+func (a *Agent) setupRaft() error {
 
 	raftAddr, err := a.Config.RaftAddr()
 	if err != nil {
@@ -74,31 +82,11 @@ func (a *Agent) setupDistributed() error {
 	}
 
 	config := &rbk.Config{}
+	config.Raft = a.Config.Raft
+	config.Raft.Logger = a.logger.Named("raft")
 	config.Raft.LocalID = config.ServerID(a.Config.NodeName)
-	config.Raft.StreamLayer = rbk.NewStreamLayer(ln)
-	config.Raft.Bootstrap = a.Config.Bootstrap
-	config.Raft.Config.Logger = a.logger.Named("raft")
-	if a.Config.Raft.CommitTimeout > 0 {
-		config.Raft.CommitTimeout = a.Config.Raft.CommitTimeout
-	}
-	if a.Config.Raft.ElectionTimeout > 0 {
-		config.Raft.ElectionTimeout = a.Config.Raft.ElectionTimeout
-	}
-	if a.Config.Raft.HeartbeatTimeout > 0 {
-		config.Raft.HeartbeatTimeout = a.Config.Raft.HeartbeatTimeout
-	}
-	if a.Config.Raft.LeaderLeaseTimeout > 0 {
-		config.Raft.LeaderLeaseTimeout = a.Config.Raft.LeaderLeaseTimeout
-	}
-	if a.Config.Raft.MaxAppendEntries > 0 {
-		config.Raft.MaxAppendEntries = a.Config.Raft.MaxAppendEntries
-	}
-	if a.Config.Raft.SnapshotInterval > 0 {
-		config.Raft.SnapshotInterval = a.Config.Raft.SnapshotInterval
-	}
-	if a.Config.Raft.SnapshotThreshold > 0 {
-		config.Raft.SnapshotThreshold = a.Config.Raft.SnapshotThreshold
-	}
+	config.StreamLayer = rbk.NewStreamLayer(ln)
+	config.Bootstrap = a.Config.Bootstrap
 
 	a.raftDb, err = rbk.New(a.Config.Backend, config)
 	if err != nil {
@@ -130,14 +118,15 @@ func (a *Agent) setupGrpcServer() error {
 		return err
 	}
 
+	logger := a.logger.Named("grpc")
 	go func() {
 		if err := a.grpcServer.Serve(ln); err != nil {
 			_ = a.Shutdown()
-			a.logger.Info("GRPC server stopped", "error", err)
+			logger.Error("server stopped", "error", err)
 		}
 	}()
 
-	a.logger.Info("GRPC server started", "address", rpcAddr)
+	logger.Info("server started", "address", rpcAddr)
 
 	return nil
 }
@@ -167,11 +156,11 @@ func (a *Agent) setupHTTPServer() error {
 	go func() {
 		if err := a.httpServer.Serve(ln); err != nil {
 			_ = a.Shutdown()
-			a.logger.Info("HTTP server stopped", "error", err)
+			config.Logger.Error("server stopped", "error", err)
 		}
 	}()
 
-	a.logger.Info("HTTP server started", "address", a.Config.BindHTTP)
+	config.Logger.Info("server started", "address", a.Config.BindHTTP)
 
 	return nil
 }

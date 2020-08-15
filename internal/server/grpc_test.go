@@ -144,17 +144,17 @@ func getRaftWithDir(
 	require.NoError(t, err)
 
 	config := &rRaft.Config{}
-	config.Raft.StreamLayer = rRaft.NewStreamLayer(ln)
+	config.Bootstrap = bootstrap
+	config.StreamLayer = rRaft.NewStreamLayer(ln)
 	config.Raft.LocalID = raft.ServerID(id)
 	config.Raft.HeartbeatTimeout = 50 * time.Millisecond
 	config.Raft.ElectionTimeout = 50 * time.Millisecond
 	config.Raft.LeaderLeaseTimeout = 50 * time.Millisecond
 	config.Raft.CommitTimeout = 5 * time.Millisecond
-	config.Raft.Bootstrap = bootstrap
 
 	var db dbApi.Backend
 	switch bkTyp {
-	case "gmap":
+	case "map":
 		db, err = gmap.New(raftDir)
 	default:
 		db, err = bolt.New(raftDir)

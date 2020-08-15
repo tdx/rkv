@@ -41,17 +41,15 @@ func New(
 	db dbApi.Backend,
 	config *Config) (*Backend, error) {
 
-	logger := config.Raft.Config.Logger
+	logger := config.Raft.Logger
 
 	if logger == nil {
 		logger = log.New(&log.LoggerOptions{
 			Name:  fmt.Sprintf("raft-%s", config.Raft.LocalID),
 			Level: log.Error,
 		})
-		config.Raft.Config.Logger = logger
-	} else {
-		logger = logger.Named(fmt.Sprintf("raft-%s", config.Raft.LocalID))
 	}
+	config.Raft.Logger = logger
 
 	d := &Backend{
 		logger: logger,
@@ -74,7 +72,7 @@ func New(
 
 // Addr returns raft transport address
 func (d *Backend) Addr() net.Addr {
-	return d.config.Raft.StreamLayer.ln.Addr()
+	return d.config.StreamLayer.ln.Addr()
 }
 
 // CommittedIndex returns the latest index committed to stable storage
@@ -120,7 +118,7 @@ func (d *Backend) setupRaft(dataDir string) error {
 	maxPool := 5
 	timeout := 10 * time.Second
 	transport := raft.NewNetworkTransport(
-		d.config.Raft.StreamLayer,
+		d.config.StreamLayer,
 		maxPool,
 		timeout,
 		d.logger.Named("net").StandardLogger(&log.StandardLoggerOptions{
@@ -168,7 +166,7 @@ func (d *Backend) setupRaft(dataDir string) error {
 		return err
 	}
 
-	if d.config.Raft.Bootstrap {
+	if d.config.Bootstrap {
 		config := raft.Configuration{
 			Servers: []raft.Server{{
 				ID:      config.LocalID,

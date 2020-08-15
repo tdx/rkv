@@ -25,7 +25,7 @@ func TestAgentBolt(t *testing.T) {
 }
 
 func TestAgentMap(t *testing.T) {
-	runAgent(t, "gmap")
+	runAgent(t, "map")
 }
 
 func TestAgentBitcask(t *testing.T) {
@@ -43,7 +43,7 @@ func runAgent(t *testing.T, bkType string) {
 
 		var db dbApi.Backend
 		switch bkType {
-		case "gmap":
+		case "map":
 			db, err = gmap.New(dataDir)
 		case "bitcask":
 			db, err = bitcask.New(dataDir, 1<<20) // 1 MB

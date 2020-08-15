@@ -33,10 +33,10 @@ func NewHTTPServer(config *Config) (*http.Server, error) {
 			Name:  "http",
 			Level: log.Error,
 		})
-		config.Logger = logger
 	} else {
 		logger = logger.Named("http")
 	}
+	config.Logger = logger
 
 	s := &Server{
 		db:     config.Db,

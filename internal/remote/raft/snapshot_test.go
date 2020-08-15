@@ -26,7 +26,7 @@ func TestRaftSnapshotBolt(t *testing.T) {
 
 func TestRaftSnapshotMap(t *testing.T) {
 	// failed now
-	runSnap(t, "gmap")
+	runSnap(t, "map")
 }
 
 func runSnap(t *testing.T, bkTyp string) {
@@ -94,17 +94,17 @@ func getRaftWithDir(
 	require.NoError(t, err)
 
 	config := &Config{}
-	config.Raft.StreamLayer = NewStreamLayer(ln)
+	config.Bootstrap = bootstrap
+	config.StreamLayer = NewStreamLayer(ln)
 	config.Raft.LocalID = raft.ServerID(id)
 	config.Raft.HeartbeatTimeout = 50 * time.Millisecond
 	config.Raft.ElectionTimeout = 50 * time.Millisecond
 	config.Raft.LeaderLeaseTimeout = 50 * time.Millisecond
 	config.Raft.CommitTimeout = 5 * time.Millisecond
-	config.Raft.Bootstrap = bootstrap
 
 	var db dbApi.Backend
 	switch bkTyp {
-	case "gmap":
+	case "map":
 		db, err = gmap.New(raftDir)
 	default:
 		db, err = bolt.New(raftDir)

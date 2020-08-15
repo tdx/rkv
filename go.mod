@@ -18,6 +18,8 @@ require (
 	github.com/miekg/dns v1.1.31 // indirect
 	github.com/prologic/bitcask v0.3.6
 	github.com/rboyer/safeio v0.2.1
+	github.com/spf13/cobra v0.0.7
+	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.6.1
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tidwall/raft-leveldb v0.0.0-20200212161345-c33715f6fd63

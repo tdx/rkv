@@ -22,7 +22,7 @@ func TestClientBolt(t *testing.T) {
 }
 
 func TestClientMap(t *testing.T) {
-	run(t, "gmap")
+	run(t, "map")
 }
 
 func TestClientBitcask(t *testing.T) {
@@ -37,7 +37,7 @@ func run(t *testing.T, bkType string) {
 
 	var db dbApi.Backend
 	switch bkType {
-	case "gmap":
+	case "map":
 		db, err = gmap.New(dataDir)
 	case "bitcask":
 		db, err = bitcask.New(dataDir, 1<<20) // 1 MB
@@ -49,11 +49,11 @@ func run(t *testing.T, bkType string) {
 	ports := dynaport.Get(2)
 
 	config := &api.Config{
-		Backend:         db,
-		DiscoveryAddr:   fmt.Sprintf("127.0.0.1:%d", ports[0]),
-		DistributedPort: ports[1],
-		LogLevel:        "debug",
-		NodeName:        "1",
+		Backend:       db,
+		NodeName:      "1",
+		LogLevel:      "debug",
+		DiscoveryAddr: fmt.Sprintf("127.0.0.1:%d", ports[0]),
+		RaftPort:      ports[1],
 	}
 
 	client, err := rkv.NewClient(config)

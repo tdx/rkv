@@ -27,7 +27,7 @@ func TestNodesBolt(t *testing.T) {
 }
 
 func TestNodesMap(t *testing.T) {
-	run(t, "gmap")
+	run(t, "map")
 }
 
 func TestNodesBitcask(t *testing.T) {
@@ -55,7 +55,7 @@ func run(t *testing.T, bkType string) {
 		require.NoError(t, err)
 
 		config := &rRaft.Config{}
-		config.Raft.StreamLayer = rRaft.NewStreamLayer(ln)
+		config.StreamLayer = rRaft.NewStreamLayer(ln)
 		config.Raft.LocalID = raft.ServerID(fmt.Sprintf("%d", i))
 		config.Raft.HeartbeatTimeout = 50 * time.Millisecond
 		config.Raft.ElectionTimeout = 50 * time.Millisecond
@@ -63,12 +63,12 @@ func run(t *testing.T, bkType string) {
 		config.Raft.CommitTimeout = 5 * time.Millisecond
 
 		if i == 0 {
-			config.Raft.Bootstrap = true
+			config.Bootstrap = true
 		}
 
 		var db dbApi.Backend
 		switch bkType {
-		case "gmap":
+		case "map":
 			db, err = gmap.New(dataDir)
 		case "bitcask":
 			db, err = bitcask.New(dataDir, 1<<20) // 1 MB
@@ -166,7 +166,7 @@ func run(t *testing.T, bkType string) {
 
 // Need call 2 times
 func TestRestartWithState(t *testing.T) {
-	run2(t, "gmap")
+	run2(t, "map")
 }
 
 func run2(t *testing.T, bkType string) {
@@ -189,7 +189,7 @@ func run2(t *testing.T, bkType string) {
 		require.NoError(t, err)
 
 		cfg := &rRaft.Config{}
-		cfg.Raft.StreamLayer = rRaft.NewStreamLayer(ln)
+		cfg.StreamLayer = rRaft.NewStreamLayer(ln)
 		cfg.Raft.LocalID = raft.ServerID(fmt.Sprintf("%d", i))
 		cfg.Raft.HeartbeatTimeout = 50 * time.Millisecond
 		cfg.Raft.ElectionTimeout = 50 * time.Millisecond
@@ -207,13 +207,13 @@ func run2(t *testing.T, bkType string) {
 		}
 
 		if i == 0 {
-			cfg.Raft.Bootstrap = true
+			cfg.Bootstrap = true
 			cfg.Raft.StartAsLeader = true
 		}
 
 		var db dbApi.Backend
 		switch bkType {
-		case "gmap":
+		case "map":
 			db, err = gmap.New(dataDir)
 		case "bitcask":
 			db, err = bitcask.New(dataDir, 1<<20) // 1 MB

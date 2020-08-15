@@ -15,19 +15,25 @@ func NewClient(config *api.Config) (api.Client, error) {
 		return nil, api.ErrNodeNameEmpty
 	}
 
+	logLevel := log.LevelFromString(config.LogLevel)
+	if logLevel == log.NoLevel {
+		logLevel = log.Error
+	}
 	logger := log.New(&log.LoggerOptions{
 		Name:  fmt.Sprintf("agent-%s", config.NodeName),
-		Level: log.LevelFromString(config.LogLevel),
+		Level: logLevel,
 	})
 
 	return agent.New(&agent.Config{
 		Raft:           config.Raft,
+		Backend:        config.Backend,
 		Logger:         logger,
 		NodeName:       config.NodeName,
 		BindAddr:       config.DiscoveryAddr,
-		RaftPort:       config.DistributedPort,
-		Backend:        config.Backend,
 		StartJoinAddrs: config.DiscoveryJoinAddrs,
+		RaftPort:       config.RaftPort,
+		RPCPort:        config.RPCPort,
+		BindHTTP:       config.HTTPAddr,
 		Bootstrap:      len(config.DiscoveryJoinAddrs) == 0,
 	})
 }

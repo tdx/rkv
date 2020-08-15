@@ -17,8 +17,12 @@ type Config struct {
 	// DiscoveryJoinAddrs is empty for leader
 	// For followers contains leader address [+running followers addresses]
 	DiscoveryJoinAddrs []string
-	// Distributed database port
-	DistributedPort int
+	// Raft port
+	RaftPort int
+	// RPC port
+	RPCPort int
+	// HTTPAddr
+	HTTPAddr string
 	// LogLevel: error | warn | info | debug | trace
 	LogLevel string
 	// Backend

@@ -1,3 +1,6 @@
+rkvd:
+	cd cmd/rkvd && go build
+
 compile:
 	protoc internal/rpc/v1/*.proto \
 			--gogo_out=Mgogoproto/gogo.proto=github.com/gogo/protobuf/proto,plugins=grpc:. \
