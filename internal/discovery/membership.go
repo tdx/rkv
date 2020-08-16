@@ -20,14 +20,14 @@ type Membership struct {
 // New ...
 func New(handler Handler, config Config) (*Membership, error) {
 
-	c := &Membership{
+	m := &Membership{
 		Config:  config,
 		handler: handler,
 	}
-	if err := c.setupSerf(); err != nil {
+	if err := m.setupSerf(); err != nil {
 		return nil, err
 	}
-	return c, nil
+	return m, nil
 }
 
 // Config ...

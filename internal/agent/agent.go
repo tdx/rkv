@@ -50,6 +50,7 @@ func New(config *Config) (*Agent, error) {
 
 	logger.Info("rkvd", "node-name", config.NodeName)
 	logger.Info("rkvd", "data-dir", filepath.Dir(config.Backend.DSN()))
+	logger.Info("rkvd", "discovery-join-address", config.StartJoinAddrs)
 
 	a := &Agent{
 		Config: config,
