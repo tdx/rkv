@@ -3,8 +3,10 @@ package api
 import "encoding/hex"
 
 type (
+	// ErrNoTable error
 	ErrNoTable string
-	ErrNoKey   string
+	// ErrNoKey error
+	ErrNoKey string
 
 	tableNil int
 	keyNil   int

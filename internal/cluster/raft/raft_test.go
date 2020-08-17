@@ -35,9 +35,13 @@ func TestNodesBitcask(t *testing.T) {
 }
 
 func run(t *testing.T, bkType string) {
-	var nodes []*rRaft.Backend
-	nodeCount := 3
-	ports := dynaport.Get(nodeCount)
+	var (
+		nodes []*rRaft.Backend
+
+		nodeCount     = 3
+		ports         = dynaport.Get(nodeCount)
+		commitTimeout = 5 * time.Millisecond
+	)
 
 	for i := 0; i < nodeCount; i++ {
 		dataDir, err := ioutil.TempDir("", "raft-db-test")
@@ -56,11 +60,12 @@ func run(t *testing.T, bkType string) {
 
 		config := &rRaft.Config{}
 		config.StreamLayer = rRaft.NewStreamLayer(ln)
+		// config.Raft.LogLevel = "trace"
 		config.Raft.LocalID = raft.ServerID(fmt.Sprintf("%d", i))
 		config.Raft.HeartbeatTimeout = 50 * time.Millisecond
 		config.Raft.ElectionTimeout = 50 * time.Millisecond
 		config.Raft.LeaderLeaseTimeout = 50 * time.Millisecond
-		config.Raft.CommitTimeout = 5 * time.Millisecond
+		config.Raft.CommitTimeout = commitTimeout
 
 		if i == 0 {
 			config.Bootstrap = true
@@ -108,6 +113,7 @@ func run(t *testing.T, bkType string) {
 		{Key: key2, Val: val2},
 	}
 
+	// using ReadAny !!!
 	for _, record := range records {
 		err := nodes[0].Put(tab, record.Key, record.Val)
 		require.NoError(t, err)
@@ -121,7 +127,7 @@ func run(t *testing.T, bkType string) {
 				require.Equal(t, record.Val, got)
 			}
 			return true
-		}, 500*time.Millisecond, 50*time.Millisecond)
+		}, 500*time.Millisecond, commitTimeout)
 	}
 
 	// remove node "1" from cluster
@@ -144,6 +150,31 @@ func run(t *testing.T, bkType string) {
 	v3, err = nodes[2].Get(rkvApi.ReadAny, tab, key3)
 	require.NoError(t, err)
 	require.Equal(t, val3, v3)
+
+	// Batch
+	var (
+		key = []byte{'k', 'e', 'y'}
+	)
+
+	be := []*dbApi.BatchEntry{
+		{Operation: dbApi.PutOperation,
+			Entry: &dbApi.Entry{Tab: tab, Key: key, Val: val1}},
+		{Operation: dbApi.PutOperation,
+			Entry: &dbApi.Entry{Tab: tab, Key: key, Val: val2}},
+	}
+
+	err = nodes[0].Batch(be)
+	require.NoError(t, err)
+
+	time.Sleep(10 * time.Millisecond)
+
+	v2, err := nodes[2].Get(rkvApi.ReadAny, tab, key)
+	require.NoError(t, err)
+	require.Equal(t, val2, v2)
+
+	v2, err = nodes[0].Get(rkvApi.ReadRaft, tab, key)
+	require.NoError(t, err)
+	require.Equal(t, val2, v2)
 
 	//
 	// ERROR: leadership lost while committing log

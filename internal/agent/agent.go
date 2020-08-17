@@ -203,10 +203,16 @@ func (a *Agent) Shutdown() error {
 	shutdown := []func() error{
 		a.membership.Leave,
 		func() error {
+			if a.grpcServer == nil {
+				return nil
+			}
 			a.grpcServer.GracefulStop()
 			return nil
 		},
 		func() error {
+			if a.httpServer == nil {
+				return nil
+			}
 			ctx, cancel := context.WithTimeout(
 				context.Background(), 5*time.Second)
 			defer func() {

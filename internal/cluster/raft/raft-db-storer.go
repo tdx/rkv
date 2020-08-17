@@ -2,6 +2,7 @@ package raft
 
 import (
 	rkvApi "github.com/tdx/rkv/api"
+	dbApi "github.com/tdx/rkv/db/api"
 	rpcRaft "github.com/tdx/rkv/internal/rpc/raft"
 )
 
@@ -82,6 +83,36 @@ func (d *Backend) Delete(tab, key []byte) error {
 				Key:    key,
 			},
 		},
+	}
+
+	_, err := d.applyLog(req)
+
+	return err
+}
+
+// Batch apply multiple put, delete operations
+func (d *Backend) Batch(commands []*dbApi.BatchEntry) error {
+	ops := make([]*rpcRaft.LogOperation, 0, len(commands))
+	for _, cmd := range commands {
+		switch cmd.Operation {
+		case dbApi.PutOperation:
+			ops = append(ops, &rpcRaft.LogOperation{
+				OpType: putOp,
+				Tab:    cmd.Entry.Tab,
+				Key:    cmd.Entry.Key,
+				Val:    cmd.Entry.Val,
+			})
+		case dbApi.DeleteOperation:
+			ops = append(ops, &rpcRaft.LogOperation{
+				OpType: deleteOp,
+				Tab:    cmd.Entry.Tab,
+				Key:    cmd.Entry.Key,
+			})
+		}
+	}
+
+	req := &rpcRaft.LogData{
+		Operations: ops,
 	}
 
 	_, err := d.applyLog(req)

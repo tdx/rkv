@@ -1,6 +1,8 @@
 package bitcask
 
 import (
+	"fmt"
+
 	dbApi "github.com/tdx/rkv/db/api"
 
 	"github.com/prologic/bitcask"
@@ -57,6 +59,10 @@ func (s *svc) Get(tab, key []byte) ([]byte, error) {
 // tab ignored for bitcask
 func (s *svc) Delete(tab, key []byte) error {
 	return s.db.Delete(key)
+}
+
+func (s *svc) Batch([]*dbApi.BatchEntry) error {
+	return fmt.Errorf("Batch does not supported")
 }
 
 //

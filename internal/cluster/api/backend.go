@@ -10,5 +10,6 @@ type Backend interface {
 	Put(tab, key, value []byte) error
 	Get(level rkvApi.ConsistencyLevel, tab, key []byte) ([]byte, error)
 	Delete(tab, key []byte) error
+	Batch([]*dbApi.BatchEntry) error
 	dbApi.Closer
 }

@@ -17,7 +17,7 @@ message LogOperation {
 	// Key that is being affected
 	bytes key = 3;
 
-	// Value is optional, corresponds to the key
+	// Value corresponds to the key for get op_type
 	bytes val = 4;
 }
 

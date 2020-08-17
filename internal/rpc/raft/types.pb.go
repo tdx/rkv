@@ -30,7 +30,7 @@ type LogOperation struct {
 	Tab []byte `protobuf:"bytes,2,opt,name=tab,proto3" json:"tab,omitempty"`
 	// Key that is being affected
 	Key []byte `protobuf:"bytes,3,opt,name=key,proto3" json:"key,omitempty"`
-	// Value is optional, corresponds to the key
+	// Value corresponds to the key for get op_type
 	Val                  []byte   `protobuf:"bytes,4,opt,name=val,proto3" json:"val,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`

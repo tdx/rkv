@@ -44,9 +44,13 @@ func New(
 	logger := config.Raft.Logger
 
 	if logger == nil {
+		logLevel := log.LevelFromString(config.Raft.LogLevel)
+		if logLevel == log.NoLevel {
+			logLevel = log.Error
+		}
 		logger = log.New(&log.LoggerOptions{
 			Name:  fmt.Sprintf("raft-%s", config.Raft.LocalID),
-			Level: log.Error,
+			Level: logLevel,
 		})
 	}
 	config.Raft.Logger = logger

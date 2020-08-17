@@ -134,3 +134,33 @@ func TestBackupRestore(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, val2, v)
 }
+
+func TestBatch(t *testing.T) {
+	defer os.RemoveAll("/tmp/rkv")
+
+	db, err := gmap.New("/tmp/rkv")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		tab  = []byte{'t', 'a', 'b'}
+		key  = []byte{'k', 'e', 'y'}
+		val1 = []byte{'v', 'a', 'l', '1'}
+		val2 = []byte{'v', 'a', 'l', '1'}
+	)
+
+	be := []*dbApi.BatchEntry{
+		{Operation: dbApi.PutOperation,
+			Entry: &dbApi.Entry{Tab: tab, Key: key, Val: val1}},
+		{Operation: dbApi.PutOperation,
+			Entry: &dbApi.Entry{Tab: tab, Key: key, Val: val2}},
+	}
+
+	err = db.Batch(be)
+	require.NoError(t, err)
+
+	v, err := db.Get(tab, key)
+	require.NoError(t, err)
+	require.Equal(t, val2, v)
+}

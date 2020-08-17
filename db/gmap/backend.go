@@ -111,6 +111,40 @@ func (s *svc) Delete(tab, key []byte) error {
 	return nil
 }
 
+func (s *svc) Batch(commands []*dbApi.BatchEntry) error {
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, cmd := range commands {
+		switch cmd.Operation {
+		case dbApi.PutOperation:
+			t, ok := s.tabs[b2s(cmd.Entry.Tab)]
+			if !ok {
+				t = make(table)
+				s.tabs[b2s(cmd.Entry.Tab)] = t
+			}
+			t[b2s(cmd.Entry.Key)] = cmd.Entry.Val
+
+		case dbApi.DeleteOperation:
+			t, ok := s.tabs[b2s(cmd.Entry.Tab)]
+			if !ok {
+				return dbApi.ErrNoTable(cmd.Entry.Tab)
+			}
+			delete(t, b2s(cmd.Entry.Key))
+
+		case dbApi.GetOperation:
+			t, ok := s.tabs[b2s(cmd.Entry.Tab)]
+			if !ok {
+				return dbApi.ErrNoTable(cmd.Entry.Tab)
+			}
+			cmd.Entry.Val = t[b2s(cmd.Entry.Key)]
+		}
+	}
+
+	return nil
+}
+
 //
 // dbApi.Closer umplementation
 //
