@@ -1,7 +1,6 @@
 #!/bin/sh
 
-# --discovery-join-addrs "127.0.0.1:8500,127.0.0.1:8600" \
-# first node of 'clean cluster' start without  'discovery-join-addrs'
+# first node of 'clean cluster' starts without 'discovery-join-addrs'
 
 ./rkvd --db map \
        --data-dir /tmp/rkv/1 \
