@@ -13,8 +13,8 @@ import (
 	dbApi "github.com/tdx/rkv/db/api"
 	"github.com/tdx/rkv/db/bolt"
 	"github.com/tdx/rkv/db/gmap"
-	remoteApi "github.com/tdx/rkv/internal/remote/api"
-	rRaft "github.com/tdx/rkv/internal/remote/raft"
+	clusterApi "github.com/tdx/rkv/internal/cluster/api"
+	rRaft "github.com/tdx/rkv/internal/cluster/raft"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 	"github.com/tdx/rkv/internal/server"
 	"github.com/travisjeffery/go-dynaport"
@@ -24,7 +24,7 @@ import (
 )
 
 //
-// It writes direct to dbApi.Backend instead of remoteApi.Backend
+// It writes direct to dbApi.Backend instead of cluserApi.Backend
 //
 func TestGrpsServer(t *testing.T) {
 	for scenario, fn := range map[string]func(
@@ -117,7 +117,7 @@ func getRaft(
 	t testing.TB,
 	id string,
 	bootstrap bool,
-	bkTyp string) (remoteApi.Backend, string) {
+	bkTyp string) (clusterApi.Backend, string) {
 
 	raftDir, err := ioutil.TempDir("", "rkv-raft-")
 	if err != nil {
@@ -133,7 +133,7 @@ func getRaftWithDir(
 	id string,
 	bootstrap bool,
 	raftDir string,
-	bkTyp string) (remoteApi.Backend, string) {
+	bkTyp string) (clusterApi.Backend, string) {
 
 	ports := dynaport.Get(1)
 

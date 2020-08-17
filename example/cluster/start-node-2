@@ -1,0 +1,10 @@
+#!/bin/sh
+
+./rkvd --db map \
+       --data-dir /tmp/rkv/2 \
+       --discovery-addr ":8500" \
+       --discovery-join-addrs "127.0.0.1:8400" \
+       --node-name "n2" \
+       --raft-port 8501 \
+       --rpc-port 8502 \
+       --http-addr ":8503"

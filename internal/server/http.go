@@ -10,14 +10,14 @@ import (
 
 	"github.com/tdx/rkv/api"
 	dbApi "github.com/tdx/rkv/db/api"
-	remoteApi "github.com/tdx/rkv/internal/remote/api"
+	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 
 	log "github.com/hashicorp/go-hclog"
 )
 
 // Server ...
 type Server struct {
-	db     remoteApi.Backend
+	db     clusterApi.Backend
 	logger log.Logger
 }
 
@@ -54,17 +54,24 @@ func NewHTTPServer(config *Config) (*http.Server, error) {
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case strings.HasPrefix(r.URL.Path, "/db/put"):
-		s.put(w, r)
+		s.dbPut(w, r)
 	case strings.HasPrefix(r.URL.Path, "/db/get"):
-		s.get(w, r)
+		s.dbGet(w, r)
 	case strings.HasPrefix(r.URL.Path, "/db/del"):
-		s.del(w, r)
+		s.dbDel(w, r)
+	case strings.HasPrefix(r.URL.Path, "/cluster/servers"):
+		s.clusterServers(w, r)
+	case strings.HasPrefix(r.URL.Path, "/cluster/leader"):
+		s.clusterLeader(w, r)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 	}
 }
 
-func (s *Server) put(w http.ResponseWriter, r *http.Request) {
+//
+// DB
+//
+func (s *Server) dbPut(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -120,7 +127,7 @@ func (s *Server) put(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(ret))
 }
 
-func (s *Server) get(w http.ResponseWriter, r *http.Request) {
+func (s *Server) dbGet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -176,7 +183,7 @@ func (s *Server) get(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(ret))
 }
 
-func (s *Server) del(w http.ResponseWriter, r *http.Request) {
+func (s *Server) dbDel(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "DELETE" && r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -223,6 +230,49 @@ func (s *Server) del(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret := `{"result":"ok"}`
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(ret))
+}
+
+//
+// Cluster
+//
+func (s *Server) clusterServers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	cluster := s.db.(clusterApi.Cluster)
+	servers, err := cluster.Servers()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	ret, err := json.Marshal(servers)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(ret))
+}
+
+func (s *Server) clusterLeader(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	cluster := s.db.(clusterApi.Cluster)
+	leader := cluster.LeaderAddr()
+
+	ret := `{"leader":"` + leader + `"}`
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

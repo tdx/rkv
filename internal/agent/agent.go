@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
+	clusterApi "github.com/tdx/rkv/internal/cluster/api"
+	rbk "github.com/tdx/rkv/internal/cluster/raft"
 	"github.com/tdx/rkv/internal/discovery"
-	remoteApi "github.com/tdx/rkv/internal/remote/api"
-	rbk "github.com/tdx/rkv/internal/remote/raft"
 	"github.com/tdx/rkv/internal/server"
 
 	log "github.com/hashicorp/go-hclog"
@@ -23,7 +23,7 @@ type Agent struct {
 	*Config
 
 	logger     log.Logger
-	raftDb     remoteApi.Backend
+	raftDb     clusterApi.Backend
 	grpcServer *grpc.Server
 	httpServer *http.Server
 	membership *discovery.Membership
@@ -94,7 +94,7 @@ func (a *Agent) setupRaft() error {
 		return err
 	}
 	if a.Config.Bootstrap {
-		return a.raftDb.(remoteApi.Leader).WaitForLeader(3 * time.Second)
+		return a.raftDb.(clusterApi.Cluster).WaitForLeader(3 * time.Second)
 	}
 	return err
 }

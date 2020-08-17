@@ -71,7 +71,7 @@ func (m *Membership) setupSerf() (err error) {
 		return err
 	}
 	go m.eventHandler()
-	if m.StartJoinAddrs != nil {
+	if len(m.StartJoinAddrs) > 0 {
 		_, err = m.serf.Join(m.StartJoinAddrs, true)
 		if err != nil {
 			return err

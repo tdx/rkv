@@ -4,7 +4,7 @@ import (
 	"context"
 
 	rkvApi "github.com/tdx/rkv/api"
-	remoteApi "github.com/tdx/rkv/internal/remote/api"
+	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 
 	log "github.com/hashicorp/go-hclog"
@@ -15,7 +15,7 @@ var _ rpcApi.StorageServer = (*grpcServer)(nil)
 
 // Config ...
 type Config struct {
-	Db     remoteApi.Backend
+	Db     clusterApi.Backend
 	Logger log.Logger
 	Addr   string
 }

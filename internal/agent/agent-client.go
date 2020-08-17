@@ -2,7 +2,7 @@ package agent
 
 import (
 	"github.com/tdx/rkv/api"
-	remoteApi "github.com/tdx/rkv/internal/remote/api"
+	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 )
 
 var _ api.Client = (*Agent)(nil)
@@ -33,6 +33,6 @@ func (a *Agent) Delete(tab, key []byte) error {
 }
 
 //
-func isLeader(db remoteApi.Backend) bool {
-	return db.(remoteApi.Leader).IsLeader()
+func isLeader(db clusterApi.Backend) bool {
+	return db.(clusterApi.Cluster).IsLeader()
 }
