@@ -20,6 +20,11 @@ import (
 	"github.com/travisjeffery/go-dynaport"
 )
 
+//
+// does not pass
+// TODO: make hash for data in db not backup files
+//
+
 func TestRaftSnapshotBolt(t *testing.T) {
 	runSnap(t, "bolt")
 }
@@ -44,7 +49,7 @@ func runSnap(t *testing.T, bkTyp string) {
 		err := raft1.Put(
 			tab,
 			[]byte(fmt.Sprintf("key-%d", i)),
-			[]byte(fmt.Sprintf("value-%d", i)),
+			[]byte(fmt.Sprintf("val-%d", i)),
 		)
 		require.NoError(t, err)
 	}
@@ -96,6 +101,7 @@ func getRaftWithDir(
 	config := &Config{}
 	config.Bootstrap = bootstrap
 	config.StreamLayer = NewStreamLayer(ln)
+	// config.Raft.LogLevel = "trace"
 	config.Raft.LocalID = raft.ServerID(id)
 	config.Raft.HeartbeatTimeout = 50 * time.Millisecond
 	config.Raft.ElectionTimeout = 50 * time.Millisecond
@@ -152,6 +158,9 @@ func ensureCommitApplied(
 
 func mkSnapshotHash(t *testing.T, raft *Backend) []byte {
 
+	tmpFile, err := ioutil.TempFile("/tmp", "rkv-snap-*")
+	defer tmpFile.Close()
+
 	snapFuture := raft.raft.Snapshot()
 	require.NoError(t, snapFuture.Error())
 
@@ -163,14 +172,17 @@ func mkSnapshotHash(t *testing.T, raft *Backend) []byte {
 	// Create a CRC64 hash
 	stateHash := crc64.New(crc64.MakeTable(crc64.ECMA))
 
+	w := io.MultiWriter(stateHash, tmpFile)
+
 	// Compute the hash
-	n, err := io.Copy(stateHash, reader)
+	// n, err := io.Copy(stateHash, reader)
+	n, err := io.Copy(w, reader)
 	require.NoError(t, err)
 	require.True(t, n > 0)
 
 	hash := stateHash.Sum(nil)
 
-	raft.logger.Info("snapshot", "bytes", n, "hash", hex.EncodeToString(hash))
+	t.Log("snapshot:", "bytes", n, "hash", hex.EncodeToString(hash))
 
 	return hash
 }
@@ -197,7 +209,7 @@ func mkDbBackupHash(t *testing.T, raft *Backend) []byte {
 
 	hash := stateHash.Sum(nil)
 
-	raft.logger.Info("backup", "bytes", n, "hash", hex.EncodeToString(hash))
+	t.Log("backup:", "bytes", n, "hash", hex.EncodeToString(hash))
 
 	return hash
 }
