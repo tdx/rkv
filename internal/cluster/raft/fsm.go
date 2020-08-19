@@ -130,7 +130,7 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 		}
 	}
 
-	// f.logger.Trace("applyBatch", "commands:", len(commands), "ro", readOnly)
+	f.logger.Trace("applyBatch", "commands:", len(commands), "ro", readOnly)
 
 	if len(commands) > 0 {
 		err := f.db.Batch(commands, readOnly)
@@ -145,15 +145,23 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 	resp := make([]interface{}, len(logs))
 	for i := range logs {
 		if len(commands) > 0 {
+			if len(commands[0]) == 1 {
+				resp[i] = commands[i][0].Result
+				// f.logger.Trace("ApplyBatch", "log", i, "response", resp[i])
+				continue
+			}
 			cmdResp := make([]interface{}, 0, len(commands[i]))
 			for _, cmd := range commands[i] {
 				cmdResp = append(cmdResp, cmd.Result)
 			}
 			resp[i] = cmdResp
+			// f.logger.Trace("ApplyBatch", "log", i, "response", cmdResp)
 			continue
 		}
 		resp[i] = true
 	}
+
+	// f.logger.Trace("ApplyBatch", "logs", len(logs), "response", resp)
 
 	return resp
 }

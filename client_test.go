@@ -74,10 +74,14 @@ func run(t *testing.T, bkType string) {
 	require.NoError(t, err)
 
 	v, err := client.Get(api.ReadAny, tab, key)
+	require.NoError(t, err)
 	require.Equal(t, val, v)
 
 	err = client.Delete(tab, key)
 	require.NoError(t, err)
+
+	_, err = client.Get(api.ReadAny, tab, key)
+	require.Equal(t, true, dbApi.IsNoKeyError(err))
 
 	v, err = client.Get(api.ReadCluster, tab, key)
 	t.Log("v:", v, "err:", err)

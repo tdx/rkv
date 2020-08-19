@@ -58,15 +58,21 @@ func (d *Backend) Get(
 	case []byte:
 		return res, nil
 	case []interface{}:
-		r, ok := res[0].([]byte)
-		if ok {
-			return r, nil
+		switch res := res[0].(type) {
+		case []byte:
+			return res, nil
+		case error:
+			return nil, res
+		default:
+			return nil,
+				fmt.Errorf("raft.Get: unexprected result: %v(%T)", res, res)
 		}
-		return nil, fmt.Errorf("raft.Get: unexprected result: %v(%T)", r, r)
+	case error:
+		return nil, res
+	default:
+		return nil,
+			fmt.Errorf("raft.Get: unexprected result: %v(%T)", res, res)
 	}
-
-	return res.([]byte), nil
-
 }
 
 // Put apply value via raft
