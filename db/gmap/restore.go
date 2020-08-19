@@ -16,7 +16,7 @@ var _ dbApi.Restorer = (*svc)(nil)
 // Restore map from reader
 func (s *svc) Restore(r io.ReadCloser) error {
 
-	var tabs map[string]table
+	var tabs map[string]map[string][]byte
 
 	d := gob.NewDecoder(r)
 

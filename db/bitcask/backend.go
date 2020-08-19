@@ -61,7 +61,7 @@ func (s *svc) Delete(tab, key []byte) error {
 	return s.db.Delete(key)
 }
 
-func (s *svc) Batch([]*dbApi.BatchEntry) error {
+func (s *svc) Batch(commands [][]*dbApi.BatchEntry, ro bool) error {
 	return fmt.Errorf("Batch does not supported")
 }
 

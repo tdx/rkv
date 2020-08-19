@@ -62,6 +62,7 @@ func New(
 			id:     string(config.Raft.LocalID),
 			logger: logger.Named("fsm"),
 			db:     db,
+			appReg: config.ApplyRegistrator,
 		},
 	}
 

@@ -15,9 +15,7 @@ func TestBackend(t *testing.T) {
 	defer os.RemoveAll("/tmp/rkv")
 
 	db, err := gmap.New("/tmp/rkv")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	var (
 		tab = []byte{'t', 'a', 'b'}
@@ -157,7 +155,7 @@ func TestBatch(t *testing.T) {
 			Entry: &dbApi.Entry{Tab: tab, Key: key, Val: val2}},
 	}
 
-	err = db.Batch(be)
+	err = db.Batch([][]*dbApi.BatchEntry{be}, false)
 	require.NoError(t, err)
 
 	v, err := db.Get(tab, key)

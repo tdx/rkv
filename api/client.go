@@ -10,7 +10,7 @@ const (
 	// Read direct from db at leader node
 	ReadLeader
 	// Read linearizable from leader node
-	ReadRaft
+	ReadCluster
 )
 
 // Client is a client interface to rkv
@@ -19,4 +19,8 @@ type Client interface {
 	Get(level ConsistencyLevel, tab, key []byte) ([]byte, error)
 	Delete(tab, key []byte) error
 	Shutdown() error
+	ApplyRegistrator
+	Apply(roLevel ConsistencyLevel,
+		fn string,
+		args []byte) (interface{}, error)
 }

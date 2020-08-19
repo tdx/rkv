@@ -119,53 +119,76 @@ func (s *svc) Delete(tab, key []byte) error {
 	})
 }
 
-func (s *svc) Batch(commands []*dbApi.BatchEntry) error {
+func (s *svc) Batch(commands [][]*dbApi.BatchEntry, ro bool) error {
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	fn := func(tx *bolt.Tx) error {
+		for i := range commands {
+			cmds := commands[i]
+			for j := range cmds {
+				cmd := cmds[j]
+				switch cmd.Operation {
+				case dbApi.PutOperation:
+					b, err := tx.CreateBucketIfNotExists(cmd.Entry.Tab)
+					if err != nil {
+						return err
+					}
+					if err := b.Put(cmd.Entry.Key, cmd.Entry.Val); err != nil {
+						return err
+					}
 
-	return s.db.Update(func(tx *bolt.Tx) error {
-		for _, cmd := range commands {
-			switch cmd.Operation {
-			case dbApi.PutOperation:
-				b, err := tx.CreateBucketIfNotExists(cmd.Entry.Tab)
-				if err != nil {
-					return err
-				}
-				if err := b.Put(cmd.Entry.Key, cmd.Entry.Val); err != nil {
-					return err
-				}
+				case dbApi.DeleteOperation:
+					b := tx.Bucket(cmd.Entry.Tab)
+					if b == nil {
+						cmd.Result = dbApi.ErrNoTable(cmd.Entry.Tab)
+						continue
+					}
+					if err := b.Delete(cmd.Entry.Key); err != nil {
+						return err
+					}
 
-			case dbApi.DeleteOperation:
-				b := tx.Bucket(cmd.Entry.Tab)
-				if b == nil {
-					return dbApi.ErrNoTable(cmd.Entry.Tab)
-				}
-				if err := b.Delete(cmd.Entry.Key); err != nil {
-					return err
-				}
+				case dbApi.GetOperation:
+					b := tx.Bucket(cmd.Entry.Tab)
+					if b == nil {
+						cmd.Result = dbApi.ErrNoTable(cmd.Entry.Tab)
+						continue
+					}
 
-			case dbApi.GetOperation:
-				b := tx.Bucket(cmd.Entry.Tab)
-				if b == nil {
-					return dbApi.ErrNoTable(cmd.Entry.Tab)
-				}
+					val := b.Get(cmd.Entry.Key)
+					if val == nil {
+						cmd.Result = dbApi.ErrNoKey(cmd.Entry.Key)
+						continue
+					}
 
-				if val := b.Get(cmd.Entry.Key); val != nil {
 					valCopy := make([]byte, len(val))
 					copy(valCopy, val)
+					cmd.Result = valCopy
 
-					cmd.Entry.Val = valCopy
-
-					continue
+				case dbApi.ApplyOperation:
+					if cmd.Apply.Fn != nil {
+						var err error
+						cmd.Result, err = cmd.Apply.Fn(tx, cmd.Apply.Args)
+						if err != nil {
+							cmd.Result = err
+						}
+					}
 				}
-
-				return dbApi.ErrNoKey(cmd.Entry.Key)
 			}
 		}
 
 		return nil
-	})
+	}
+
+	if ro {
+		s.mu.RLock()
+		defer s.mu.RUnlock()
+
+		return s.db.View(fn)
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.db.Update(fn)
 }
 
 //

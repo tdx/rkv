@@ -1,6 +1,8 @@
 package raft
 
 import (
+	"fmt"
+
 	rkvApi "github.com/tdx/rkv/api"
 	dbApi "github.com/tdx/rkv/db/api"
 	rpcRaft "github.com/tdx/rkv/internal/rpc/raft"
@@ -10,6 +12,7 @@ const (
 	putOp uint32 = 1 << iota
 	deleteOp
 	getOp
+	applyOp
 )
 
 //
@@ -29,7 +32,7 @@ func (d *Backend) Get(
 		// TODO: rpc call to leader
 		return nil, rkvApi.ErrNodeIsNotALeader
 
-	case rkvApi.ReadRaft:
+	case rkvApi.ReadCluster:
 		if !d.IsLeader() {
 			return nil, rkvApi.ErrNodeIsNotALeader
 		}
@@ -49,6 +52,17 @@ func (d *Backend) Get(
 	res, err := d.applyLog(req)
 	if err != nil {
 		return nil, err
+	}
+
+	switch res := res.(type) {
+	case []byte:
+		return res, nil
+	case []interface{}:
+		r, ok := res[0].([]byte)
+		if ok {
+			return r, nil
+		}
+		return nil, fmt.Errorf("raft.Get: unexprected result: %v(%T)", r, r)
 	}
 
 	return res.([]byte), nil
@@ -91,7 +105,7 @@ func (d *Backend) Delete(tab, key []byte) error {
 }
 
 // Batch apply multiple put, delete operations
-func (d *Backend) Batch(commands []*dbApi.BatchEntry) error {
+func (d *Backend) Batch(commands []*dbApi.BatchEntry) (interface{}, error) {
 	ops := make([]*rpcRaft.LogOperation, 0, len(commands))
 	for _, cmd := range commands {
 		switch cmd.Operation {
@@ -108,6 +122,18 @@ func (d *Backend) Batch(commands []*dbApi.BatchEntry) error {
 				Tab:    cmd.Entry.Tab,
 				Key:    cmd.Entry.Key,
 			})
+		case dbApi.GetOperation:
+			ops = append(ops, &rpcRaft.LogOperation{
+				OpType: getOp,
+				Tab:    cmd.Entry.Tab,
+				Key:    cmd.Entry.Key,
+			})
+		case dbApi.ApplyOperation:
+			ops = append(ops, &rpcRaft.LogOperation{
+				OpType: applyOp,
+				Tab:    cmd.Entry.Tab,
+				Key:    cmd.Apply.Args,
+			})
 		}
 	}
 
@@ -115,7 +141,5 @@ func (d *Backend) Batch(commands []*dbApi.BatchEntry) error {
 		Operations: ops,
 	}
 
-	_, err := d.applyLog(req)
-
-	return err
+	return d.applyLog(req)
 }

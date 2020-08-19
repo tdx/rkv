@@ -103,7 +103,7 @@ func runAgent(t *testing.T, bkType string) {
 	err := leaderClient.Put(tab, key, val)
 	require.NoError(t, err)
 
-	v, err := leaderClient.Get(rkvApi.ReadRaft, tab, key)
+	v, err := leaderClient.Get(rkvApi.ReadCluster, tab, key)
 	require.NoError(t, err)
 	require.Equal(t, v, val)
 

@@ -150,10 +150,27 @@ func TestBatch(t *testing.T) {
 			Entry: &dbApi.Entry{Tab: tab, Key: key, Val: val2}},
 	}
 
-	err = db.Batch(be)
+	err = db.Batch([][]*dbApi.BatchEntry{be}, false)
 	require.NoError(t, err)
 
 	v, err := db.Get(tab, key)
 	require.NoError(t, err)
 	require.Equal(t, val2, v)
+
+	// 2 get in batch
+	bg := []*dbApi.BatchEntry{
+		{Operation: dbApi.GetOperation,
+			Entry: &dbApi.Entry{Tab: tab, Key: key}},
+		{Operation: dbApi.GetOperation,
+			Entry: &dbApi.Entry{Tab: tab, Key: []byte("invalid")}},
+	}
+
+	err = db.Batch([][]*dbApi.BatchEntry{bg}, true)
+	require.NoError(t, err)
+	require.Equal(t, val2, bg[0].Result)
+
+	err, ok := bg[1].Result.(error)
+	require.True(t, ok)
+	require.Equal(t, true, dbApi.IsNoKeyError(err))
+
 }

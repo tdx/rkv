@@ -23,8 +23,8 @@ func (f *fsm) Delete(tab, key []byte) error {
 }
 
 // Batch ...
-func (f *fsm) Batch(commands []*dbApi.BatchEntry) error {
-	return f.db.Batch(commands)
+func (f *fsm) Batch(commands [][]*dbApi.BatchEntry, ro bool) error {
+	return f.db.Batch(commands, ro)
 }
 
 // Close ...

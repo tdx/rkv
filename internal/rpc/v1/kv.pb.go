@@ -27,61 +27,6 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type StorageEntry struct {
-	Key                  []byte   `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Val                  []byte   `protobuf:"bytes,2,opt,name=val,proto3" json:"val,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *StorageEntry) Reset()         { *m = StorageEntry{} }
-func (m *StorageEntry) String() string { return proto.CompactTextString(m) }
-func (*StorageEntry) ProtoMessage()    {}
-func (*StorageEntry) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a8ebe9c5370b880e, []int{0}
-}
-func (m *StorageEntry) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *StorageEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_StorageEntry.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *StorageEntry) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StorageEntry.Merge(m, src)
-}
-func (m *StorageEntry) XXX_Size() int {
-	return m.Size()
-}
-func (m *StorageEntry) XXX_DiscardUnknown() {
-	xxx_messageInfo_StorageEntry.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_StorageEntry proto.InternalMessageInfo
-
-func (m *StorageEntry) GetKey() []byte {
-	if m != nil {
-		return m.Key
-	}
-	return nil
-}
-
-func (m *StorageEntry) GetVal() []byte {
-	if m != nil {
-		return m.Val
-	}
-	return nil
-}
-
 type StoragePutArgs struct {
 	Tab                  []byte   `protobuf:"bytes,1,opt,name=tab,proto3" json:"tab,omitempty"`
 	Key                  []byte   `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
@@ -95,7 +40,7 @@ func (m *StoragePutArgs) Reset()         { *m = StoragePutArgs{} }
 func (m *StoragePutArgs) String() string { return proto.CompactTextString(m) }
 func (*StoragePutArgs) ProtoMessage()    {}
 func (*StoragePutArgs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a8ebe9c5370b880e, []int{1}
+	return fileDescriptor_a8ebe9c5370b880e, []int{0}
 }
 func (m *StoragePutArgs) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -156,7 +101,7 @@ func (m *StoragePutReply) Reset()         { *m = StoragePutReply{} }
 func (m *StoragePutReply) String() string { return proto.CompactTextString(m) }
 func (*StoragePutReply) ProtoMessage()    {}
 func (*StoragePutReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a8ebe9c5370b880e, []int{2}
+	return fileDescriptor_a8ebe9c5370b880e, []int{1}
 }
 func (m *StoragePutReply) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -205,7 +150,7 @@ func (m *StorageGetArgs) Reset()         { *m = StorageGetArgs{} }
 func (m *StorageGetArgs) String() string { return proto.CompactTextString(m) }
 func (*StorageGetArgs) ProtoMessage()    {}
 func (*StorageGetArgs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a8ebe9c5370b880e, []int{3}
+	return fileDescriptor_a8ebe9c5370b880e, []int{2}
 }
 func (m *StorageGetArgs) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -267,7 +212,7 @@ func (m *StorageGetReply) Reset()         { *m = StorageGetReply{} }
 func (m *StorageGetReply) String() string { return proto.CompactTextString(m) }
 func (*StorageGetReply) ProtoMessage()    {}
 func (*StorageGetReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a8ebe9c5370b880e, []int{4}
+	return fileDescriptor_a8ebe9c5370b880e, []int{3}
 }
 func (m *StorageGetReply) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -322,7 +267,7 @@ func (m *StorageDeleteArgs) Reset()         { *m = StorageDeleteArgs{} }
 func (m *StorageDeleteArgs) String() string { return proto.CompactTextString(m) }
 func (*StorageDeleteArgs) ProtoMessage()    {}
 func (*StorageDeleteArgs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a8ebe9c5370b880e, []int{5}
+	return fileDescriptor_a8ebe9c5370b880e, []int{4}
 }
 func (m *StorageDeleteArgs) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -376,7 +321,7 @@ func (m *StorageDeleteReply) Reset()         { *m = StorageDeleteReply{} }
 func (m *StorageDeleteReply) String() string { return proto.CompactTextString(m) }
 func (*StorageDeleteReply) ProtoMessage()    {}
 func (*StorageDeleteReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a8ebe9c5370b880e, []int{6}
+	return fileDescriptor_a8ebe9c5370b880e, []int{5}
 }
 func (m *StorageDeleteReply) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -413,7 +358,6 @@ func (m *StorageDeleteReply) GetErr() string {
 }
 
 func init() {
-	proto.RegisterType((*StorageEntry)(nil), "kv.v1.StorageEntry")
 	proto.RegisterType((*StoragePutArgs)(nil), "kv.v1.StoragePutArgs")
 	proto.RegisterType((*StoragePutReply)(nil), "kv.v1.StoragePutReply")
 	proto.RegisterType((*StorageGetArgs)(nil), "kv.v1.StorageGetArgs")
@@ -425,27 +369,26 @@ func init() {
 func init() { proto.RegisterFile("internal/rpc/v1/kv.proto", fileDescriptor_a8ebe9c5370b880e) }
 
 var fileDescriptor_a8ebe9c5370b880e = []byte{
-	// 309 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0x4d, 0x4a, 0xfc, 0x40,
-	0x10, 0xc5, 0xe9, 0x84, 0x99, 0x3f, 0xff, 0x22, 0xf8, 0xd1, 0xa8, 0xc4, 0x2c, 0x82, 0x44, 0x10,
-	0x57, 0x09, 0x33, 0x8e, 0xb8, 0x72, 0xa1, 0xa8, 0xd9, 0x0e, 0xf1, 0x04, 0x1d, 0x29, 0x82, 0xa4,
-	0x49, 0x42, 0xdb, 0xd3, 0x30, 0xf7, 0xf2, 0x10, 0x2e, 0x3d, 0x82, 0xe4, 0x24, 0xd2, 0x9d, 0x2f,
-	0x63, 0x14, 0xdc, 0x15, 0xd5, 0xef, 0xbd, 0x5f, 0x55, 0x25, 0xe0, 0x3e, 0x17, 0x12, 0x45, 0xc1,
-	0x78, 0x24, 0xaa, 0xa7, 0x48, 0x2d, 0xa2, 0x5c, 0x85, 0x95, 0x28, 0x65, 0x49, 0x67, 0xb9, 0x0a,
-	0xd5, 0xc2, 0x3b, 0xc8, 0xca, 0xac, 0x34, 0x9d, 0x48, 0x57, 0xcd, 0x63, 0xb0, 0x04, 0xe7, 0x51,
-	0x96, 0x82, 0x65, 0x78, 0x5f, 0x48, 0xb1, 0xa5, 0x7b, 0x60, 0xe7, 0xb8, 0x75, 0xc9, 0x09, 0x39,
-	0x77, 0x12, 0x5d, 0xea, 0x8e, 0x62, 0xdc, 0xb5, 0x9a, 0x8e, 0x62, 0x3c, 0x78, 0x80, 0x9d, 0xd6,
-	0xb3, 0xde, 0xc8, 0x1b, 0x91, 0xbd, 0x68, 0x8d, 0x64, 0x69, 0xe7, 0x92, 0x2c, 0xed, 0x72, 0xac,
-	0x49, 0x8e, 0x3d, 0xe4, 0x9c, 0xc2, 0xee, 0x90, 0x93, 0x60, 0xc5, 0x8d, 0x08, 0x85, 0x30, 0x41,
-	0xff, 0x13, 0x5d, 0x7e, 0x81, 0xc5, 0xd8, 0xc3, 0xb8, 0xe2, 0x46, 0x33, 0x4b, 0x74, 0xd9, 0xe1,
-	0xad, 0x09, 0xde, 0xee, 0xf1, 0xc1, 0x65, 0x0f, 0x8b, 0x71, 0x80, 0xe9, 0x89, 0x48, 0x3f, 0x51,
-	0x87, 0xb7, 0x06, 0xfc, 0x15, 0xec, 0xb7, 0xb6, 0x3b, 0xe4, 0x28, 0xf1, 0xaf, 0xeb, 0x06, 0x67,
-	0x40, 0x47, 0xc6, 0x5f, 0xf6, 0x5b, 0xbe, 0x12, 0xf8, 0xd7, 0x0a, 0xe9, 0x0a, 0xec, 0xf5, 0x46,
-	0xd2, 0xc3, 0xd0, 0x7c, 0xb1, 0x70, 0x7c, 0x64, 0xef, 0x68, 0xd2, 0x6e, 0x32, 0x57, 0x60, 0xc7,
-	0x38, 0x71, 0xb5, 0xd7, 0xfa, 0xee, 0xea, 0x97, 0xbf, 0x86, 0x79, 0x33, 0x18, 0x75, 0xc7, 0x8a,
-	0x61, 0x4f, 0xef, 0xf8, 0xa7, 0x17, 0x63, 0xbf, 0x75, 0xde, 0x6a, 0x9f, 0xbc, 0xd7, 0x3e, 0xf9,
-	0xa8, 0x7d, 0x92, 0xce, 0xcd, 0xcf, 0x74, 0xf1, 0x19, 0x00, 0x00, 0xff, 0xff, 0x16, 0xf2, 0x57,
-	0x63, 0x85, 0x02, 0x00, 0x00,
+	// 294 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0xc8, 0xcc, 0x2b, 0x49,
+	0x2d, 0xca, 0x4b, 0xcc, 0xd1, 0x2f, 0x2a, 0x48, 0xd6, 0x2f, 0x33, 0xd4, 0xcf, 0x2e, 0xd3, 0x2b,
+	0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0xcd, 0x2e, 0xd3, 0x2b, 0x33, 0x94, 0x12, 0x49, 0xcf, 0x4f,
+	0xcf, 0x07, 0x8b, 0xe8, 0x83, 0x58, 0x10, 0x49, 0x25, 0x37, 0x2e, 0xbe, 0xe0, 0x92, 0xfc, 0xa2,
+	0xc4, 0xf4, 0xd4, 0x80, 0xd2, 0x12, 0xc7, 0xa2, 0xf4, 0x62, 0x21, 0x01, 0x2e, 0xe6, 0x92, 0xc4,
+	0x24, 0x09, 0x46, 0x05, 0x46, 0x0d, 0x9e, 0x20, 0x10, 0x13, 0x24, 0x92, 0x9d, 0x5a, 0x29, 0xc1,
+	0x04, 0x11, 0xc9, 0x4e, 0xad, 0x04, 0x89, 0x94, 0x25, 0xe6, 0x48, 0x30, 0x43, 0x44, 0xca, 0x12,
+	0x73, 0x94, 0x94, 0xb9, 0xf8, 0x11, 0xe6, 0x04, 0xa5, 0x16, 0xe4, 0x80, 0x15, 0xa5, 0x16, 0x15,
+	0x81, 0x0d, 0xe2, 0x0c, 0x02, 0x31, 0x91, 0x2c, 0x73, 0x4f, 0x85, 0x5b, 0x96, 0x53, 0x96, 0x03,
+	0x56, 0xc3, 0x1a, 0x04, 0x62, 0xc2, 0xac, 0x67, 0xc2, 0xb0, 0x9e, 0x19, 0x6e, 0xbd, 0x92, 0x29,
+	0xdc, 0x32, 0xf7, 0x54, 0x84, 0x65, 0x20, 0x17, 0x31, 0xc2, 0x5d, 0x04, 0xb3, 0x9e, 0x09, 0x61,
+	0xbd, 0x39, 0x97, 0x20, 0x54, 0x9b, 0x4b, 0x6a, 0x4e, 0x6a, 0x49, 0x2a, 0xb1, 0xde, 0x55, 0x52,
+	0xe3, 0x12, 0x42, 0xd1, 0x88, 0xc3, 0x7f, 0x46, 0x5b, 0x18, 0xb9, 0xd8, 0xa1, 0x0a, 0x85, 0x4c,
+	0xb8, 0x98, 0x03, 0x4a, 0x4b, 0x84, 0x44, 0xf5, 0xc0, 0xa1, 0xaf, 0x87, 0x1a, 0xc8, 0x52, 0x62,
+	0x18, 0xc2, 0x10, 0x33, 0x4d, 0xb8, 0x98, 0xdd, 0x53, 0x31, 0x74, 0x41, 0x43, 0x0b, 0x5d, 0x17,
+	0xdc, 0xf3, 0xb6, 0x5c, 0x6c, 0x10, 0x87, 0x09, 0x49, 0xa0, 0xaa, 0x40, 0xf8, 0x53, 0x4a, 0x12,
+	0x9b, 0x0c, 0x58, 0xbb, 0x13, 0xcf, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78,
+	0x24, 0xc7, 0x98, 0xc4, 0x06, 0x4e, 0x18, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x76, 0x38,
+	0x39, 0x62, 0x51, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -598,47 +541,6 @@ var _Storage_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "internal/rpc/v1/kv.proto",
-}
-
-func (m *StorageEntry) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *StorageEntry) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *StorageEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Val) > 0 {
-		i -= len(m.Val)
-		copy(dAtA[i:], m.Val)
-		i = encodeVarintKv(dAtA, i, uint64(len(m.Val)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Key) > 0 {
-		i -= len(m.Key)
-		copy(dAtA[i:], m.Key)
-		i = encodeVarintKv(dAtA, i, uint64(len(m.Key)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
 }
 
 func (m *StoragePutArgs) Marshal() (dAtA []byte, err error) {
@@ -896,26 +798,6 @@ func encodeVarintKv(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *StorageEntry) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Key)
-	if l > 0 {
-		n += 1 + l + sovKv(uint64(l))
-	}
-	l = len(m.Val)
-	if l > 0 {
-		n += 1 + l + sovKv(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
 func (m *StoragePutArgs) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1040,128 +922,6 @@ func sovKv(x uint64) (n int) {
 }
 func sozKv(x uint64) (n int) {
 	return sovKv(uint64((x << 1) ^ uint64((int64(x) >> 63))))
-}
-func (m *StorageEntry) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowKv
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: StorageEntry: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: StorageEntry: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowKv
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthKv
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthKv
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Key = append(m.Key[:0], dAtA[iNdEx:postIndex]...)
-			if m.Key == nil {
-				m.Key = []byte{}
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Val", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowKv
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthKv
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthKv
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Val = append(m.Val[:0], dAtA[iNdEx:postIndex]...)
-			if m.Val == nil {
-				m.Val = []byte{}
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipKv(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthKv
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthKv
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
 }
 func (m *StoragePutArgs) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)

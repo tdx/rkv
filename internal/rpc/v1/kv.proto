@@ -7,11 +7,6 @@ option (gogoproto.marshaler_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.sizer_all) = true;
 
-message StorageEntry {
-    bytes key = 1;
-    bytes val = 2;
-}
-
 message StoragePutArgs {
     bytes tab = 1;
     bytes key = 2;
@@ -42,7 +37,7 @@ message StorageDeleteReply {
     string err = 1;
 }
 
-// This rpc call used to redirect Put opetation to raft leader
+// This rpc call used to redirect opetation to raft leader
 service Storage {
     rpc Put(StoragePutArgs) returns (StoragePutReply);
     rpc Get(StorageGetArgs) returns (StorageGetReply);

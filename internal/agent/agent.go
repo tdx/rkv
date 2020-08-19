@@ -9,9 +9,11 @@ import (
 	"sync"
 	"time"
 
+	rkvApi "github.com/tdx/rkv/api"
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 	rbk "github.com/tdx/rkv/internal/cluster/raft"
 	"github.com/tdx/rkv/internal/discovery"
+	"github.com/tdx/rkv/internal/registry"
 	"github.com/tdx/rkv/internal/server"
 
 	log "github.com/hashicorp/go-hclog"
@@ -30,6 +32,8 @@ type Agent struct {
 
 	shutdown     bool
 	shutdownLock sync.Mutex
+
+	registry rkvApi.ApplyRegistrator
 }
 
 // New returns agent instance
@@ -53,8 +57,9 @@ func New(config *Config) (*Agent, error) {
 	logger.Info("rkvd", "discovery-join-address", config.StartJoinAddrs)
 
 	a := &Agent{
-		Config: config,
-		logger: logger,
+		Config:   config,
+		logger:   logger,
+		registry: registry.NewApplyRegistrator(),
 	}
 
 	setup := []func() error{
@@ -88,6 +93,7 @@ func (a *Agent) setupRaft() error {
 	config.Raft.LocalID = config.ServerID(a.Config.NodeName)
 	config.StreamLayer = rbk.NewStreamLayer(ln)
 	config.Bootstrap = a.Config.Bootstrap
+	config.ApplyRegistrator = a.registry
 
 	a.raftDb, err = rbk.New(a.Config.Backend, config)
 	if err != nil {

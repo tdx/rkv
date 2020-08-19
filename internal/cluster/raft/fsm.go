@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	rkvApi "github.com/tdx/rkv/api"
 	dbApi "github.com/tdx/rkv/db/api"
 	rpcRaft "github.com/tdx/rkv/internal/rpc/raft"
 
@@ -21,6 +22,7 @@ type fsm struct {
 	id     string
 	db     dbApi.Backend
 	logger log.Logger
+	appReg rkvApi.ApplyRegistrator
 }
 
 // Apply will apply a log to the FSM. This is called from the raft library.
@@ -43,22 +45,20 @@ func (f *fsm) Apply(r *raft.Log) interface{} {
 	return nil
 }
 
-//
-// TODO: return value for Get requests
-//
 // ApplyBatch will apply a set of logs to the FSM. This is called from the raft
 // library.
 func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 
-	f.logger.Trace("applyBatch", "num logs:", len(logs))
+	f.logger.Trace("applyBatch", "logs", len(logs))
 
 	if len(logs) == 0 {
 		return []interface{}{}
 	}
 
-	commands := make([]*dbApi.BatchEntry, 0, len(logs))
+	readOnly := true
+	commands := make([][]*dbApi.BatchEntry, len(logs))
 
-	for _, log := range logs {
+	for i, log := range logs {
 
 		switch log.Type {
 		case raft.LogCommand:
@@ -71,11 +71,13 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 			for _, cmd := range command.Operations {
 
 				f.logger.Trace("applyBatch", "raft_index", log.Index,
-					"raft_term", log.Term, "cmd_type", cmd.OpType)
+					"raft_term", log.Term, "cmd_type", cmd.OpType,
+					"log", i, "commands", len(command.Operations))
 
 				switch cmd.OpType {
 				case putOp:
-					commands = append(commands, &dbApi.BatchEntry{
+					readOnly = false
+					commands[i] = append(commands[i], &dbApi.BatchEntry{
 						Operation: dbApi.PutOperation,
 						Entry: &dbApi.Entry{
 							Tab: cmd.Tab,
@@ -84,7 +86,8 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 						}})
 
 				case deleteOp:
-					commands = append(commands, &dbApi.BatchEntry{
+					readOnly = false
+					commands[i] = append(commands[i], &dbApi.BatchEntry{
 						Operation: dbApi.DeleteOperation,
 						Entry: &dbApi.Entry{
 							Tab: cmd.Tab,
@@ -92,25 +95,48 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 						}})
 
 				case getOp:
-					commands = append(commands, &dbApi.BatchEntry{
+					commands[i] = append(commands[i], &dbApi.BatchEntry{
 						Operation: dbApi.GetOperation,
 						Entry: &dbApi.Entry{
 							Tab: cmd.Tab,
 							Key: cmd.Key,
 						}})
 
+				case applyOp:
+					fn, ro, err := f.appReg.GetApplyFunc(string(cmd.Tab))
+					if !ro {
+						readOnly = false
+					}
+
+					cmd := &dbApi.BatchEntry{
+						Operation: dbApi.ApplyOperation,
+						Apply: &dbApi.Apply{
+							Fn:       fn,
+							Args:     cmd.Key,
+							ReadOnly: ro,
+						}}
+
+					if err != nil {
+						f.logger.Error("applyFun", "bad_func", err)
+						cmd.Result = err
+					}
+					commands[i] = append(commands[i], cmd)
+
 				default:
+					f.logger.Error("applyBatch", "bad_cmd", cmd.OpType)
 					continue
 				}
 			}
 		}
 	}
 
-	f.logger.Trace("applyBatch", "commands:", len(commands))
+	// f.logger.Trace("applyBatch", "commands:", len(commands), "ro", readOnly)
 
-	err := f.db.Batch(commands)
-	if err != nil {
-		f.logger.Error("Batch failed", "error", err)
+	if len(commands) > 0 {
+		err := f.db.Batch(commands, readOnly)
+		if err != nil {
+			f.logger.Error("Batch failed", "error", err)
+		}
 	}
 
 	// Build the responses. The logs array is used here to ensure we reply to
@@ -118,12 +144,15 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 	// should future proof this function from more log types being provided.
 	resp := make([]interface{}, len(logs))
 	for i := range logs {
-		if len(commands) == 1 && commands[0].Operation == dbApi.GetOperation {
-			resp[i] = commands[i].Entry.Val
-		} else {
-			resp[i] = err == nil
+		if len(commands) > 0 {
+			cmdResp := make([]interface{}, 0, len(commands[i]))
+			for _, cmd := range commands[i] {
+				cmdResp = append(cmdResp, cmd.Result)
+			}
+			resp[i] = cmdResp
+			continue
 		}
-
+		resp[i] = true
 	}
 
 	return resp
@@ -161,6 +190,8 @@ func (f *fsm) applyData(req rpcRaft.LogData) interface{} {
 				return err
 			}
 			return val
+		case applyOp:
+			return f.applyFunc(cmd.Tab, cmd.Key)
 		default:
 			err = fmt.Errorf("%q is not supported operation", cmd.OpType)
 		}

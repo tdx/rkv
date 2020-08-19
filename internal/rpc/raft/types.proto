@@ -11,10 +11,10 @@ message LogOperation {
     // OpType is the Operation type
 	uint32 op_type = 1;
 
-	// table
+	// table | func name
 	bytes tab = 2;
 
-	// Key that is being affected
+	// Key that is being affected | func args
 	bytes key = 3;
 
 	// Value corresponds to the key for get op_type
