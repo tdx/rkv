@@ -37,9 +37,23 @@ message StorageDeleteReply {
     string err = 1;
 }
 
-// This rpc call used to redirect opetation to raft leader
+message Server {
+  string id        = 1;
+  string rpc_addr  = 2;
+  string raft_addr = 3;
+  bool   is_leader = 4;
+  bool   online    = 5;
+}
+
+message ServersArgs {}
+
+message ServersReply {
+  repeated Server servers = 1;
+}
+
 service Storage {
-    rpc Put(StoragePutArgs) returns (StoragePutReply);
-    rpc Get(StorageGetArgs) returns (StorageGetReply);
+    rpc Put(StoragePutArgs)       returns (StoragePutReply);
+    rpc Get(StorageGetArgs)       returns (StorageGetReply);
     rpc Delete(StorageDeleteArgs) returns (StorageDeleteReply);
+    rpc Servers(ServersArgs)      returns (ServersReply);
 }

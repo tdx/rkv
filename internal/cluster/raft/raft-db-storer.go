@@ -1,11 +1,14 @@
 package raft
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
 	rkvApi "github.com/tdx/rkv/api"
 	dbApi "github.com/tdx/rkv/db/api"
 	rpcRaft "github.com/tdx/rkv/internal/rpc/raft"
+	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 )
 
 const (
@@ -21,6 +24,8 @@ const (
 func (d *Backend) Get(
 	lvl rkvApi.ConsistencyLevel, tab, key []byte) ([]byte, error) {
 
+	doLeaderRPC := false
+
 	switch lvl {
 	case rkvApi.ReadAny:
 		return d.fsm.Get(tab, key)
@@ -29,16 +34,36 @@ func (d *Backend) Get(
 		if d.IsLeader() {
 			return d.fsm.Get(tab, key)
 		}
-		// TODO: rpc call to leader
-		return nil, rkvApi.ErrNodeIsNotALeader
+
+		if d.leaderConn == nil {
+			return nil, rkvApi.ErrNodeIsNotALeader
+		}
+
+		doLeaderRPC = true
 
 	case rkvApi.ReadCluster:
 		if !d.IsLeader() {
-			return nil, rkvApi.ErrNodeIsNotALeader
+			if d.leaderConn == nil {
+				return nil, rkvApi.ErrNodeIsNotALeader
+			}
+			doLeaderRPC = true
 		}
 	}
 
-	// raft read from leader
+	if doLeaderRPC {
+		resp, err := d.leaderConn.Get(
+			context.Background(),
+			&rpcApi.StorageGetArgs{
+				Tab: tab,
+				Key: key,
+			})
+		if err != nil {
+			return nil, err
+		}
+		return resp.Val, nil
+	}
+
+	// raft read from cluster
 	req := &rpcRaft.LogData{
 		Operations: []*rpcRaft.LogOperation{
 			{
@@ -77,6 +102,29 @@ func (d *Backend) Get(
 
 // Put apply value via raft
 func (d *Backend) Put(tab, key, val []byte) error {
+
+	if !d.IsLeader() {
+		if d.leaderConn == nil {
+			return rkvApi.ErrNodeIsNotALeader
+		}
+
+		// do leader RPC
+		resp, err := d.leaderConn.Put(
+			context.Background(),
+			&rpcApi.StoragePutArgs{
+				Tab: tab,
+				Key: key,
+				Val: val,
+			})
+		if err != nil {
+			return err
+		}
+		if resp.Err != "" {
+			return errors.New(resp.Err)
+		}
+		return nil
+	}
+
 	req := &rpcRaft.LogData{
 		Operations: []*rpcRaft.LogOperation{
 			{
@@ -95,6 +143,25 @@ func (d *Backend) Put(tab, key, val []byte) error {
 
 // Delete inserts an entry in the log to delete the given key
 func (d *Backend) Delete(tab, key []byte) error {
+
+	if !d.IsLeader() {
+		if d.leaderConn == nil {
+			return rkvApi.ErrNodeIsNotALeader
+		}
+
+		// do leader RPC
+		resp, err := d.leaderConn.Delete(
+			context.Background(),
+			&rpcApi.StorageDeleteArgs{
+				Tab: tab,
+				Key: key,
+			})
+		if err != nil {
+			return err
+		}
+		return errors.New(resp.Err)
+	}
+
 	req := &rpcRaft.LogData{
 		Operations: []*rpcRaft.LogOperation{
 			{

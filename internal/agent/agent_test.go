@@ -94,9 +94,11 @@ func runAgent(t *testing.T, bkType string) {
 	time.Sleep(3 * time.Second)
 
 	var (
-		tab = []byte{'t', 'a', 'b'}
-		key = []byte{'k', 'e', 'y'}
-		val = []byte{'v', 'a', 'l'}
+		tab  = []byte{'t', 'a', 'b'}
+		key  = []byte{'k', 'e', 'y'}
+		key2 = []byte{'k', 'e', 'y', '2'}
+		val  = []byte{'v', 'a', 'l'}
+		val2 = []byte{'v', 'a', 'l', '2'}
 	)
 
 	leaderClient := agents[0]
@@ -114,4 +116,38 @@ func runAgent(t *testing.T, bkType string) {
 	followerVal, err := followerClient.Get(rkvApi.ReadAny, tab, key)
 	require.NoError(t, err)
 	require.Equal(t, val, followerVal)
+
+	//
+	// Routing to leader
+	//
+	// rpcAddrFollower, err := agents[1].Config.RPCAddr()
+	// require.NoError(t, err)
+
+	// clientOpts := []grpc.DialOption{grpc.WithInsecure()}
+	// conn, err := grpc.Dial(fmt.Sprintf(
+	// 	"%s:///%s", agents[1].Config.NodeName, rpcAddrFollower),
+	// 	clientOpts...,
+	// )
+	// require.NoError(t, err)
+
+	// grpcFollowerClient := rpcApi.NewStorageClient(conn)
+
+	// ctx := context.Background()
+	// resp, err := grpcFollowerClient.Put(ctx, &rpcApi.StoragePutArgs{
+	// 	Tab: tab,
+	// 	Key: key,
+	// 	Val: val,
+	// })
+	// require.NoError(t, err)
+	// require.Empty(t, resp.GetErr())
+
+	// try write to follower
+	err = followerClient.Put(tab, key2, val2)
+	require.NoError(t, err)
+
+	v2, err := followerClient.Get(rkvApi.ReadLeader, tab, key2)
+	require.NoError(t, err)
+	require.Equal(t, val2, v2)
+
+	// TODO: test routing for all Client API
 }

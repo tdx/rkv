@@ -1,9 +1,23 @@
 #!/bin/sh
 
+joins=${joins:-127.0.0.1:8400,127.0.0.1:8500}
+log=${log:-info}
+
+while [ $# -gt 0 ]; do
+
+  if [[ $1 == *"--"* ]]; then
+    param="${1/--/}"
+    declare $param="$2"
+  fi
+
+  shift
+done
+
 ./rkvd --db map \
        --data-dir /tmp/rkv/3 \
+       --log-level $log \
        --discovery-addr ":8600" \
-       --discovery-join-addrs "127.0.0.1:8400,127.0.0.1:8500" \
+       --discovery-join-addrs $joins \
        --node-name "n3" \
        --raft-port 8601 \
        --rpc-port 8602 \

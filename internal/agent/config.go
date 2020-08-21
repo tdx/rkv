@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	rkvApi "github.com/tdx/rkv/api"
 	dbApi "github.com/tdx/rkv/db/api"
 
 	log "github.com/hashicorp/go-hclog"
@@ -16,14 +17,15 @@ type Config struct {
 	Logger   log.Logger
 	BindAddr string // Serf, Raft, RPC address. Serf with port
 	RPCPort  int    // rpc API server
-	BindHTTP string // bind address for HTTP server
 	RaftPort int
+	BindHTTP string // bind address for HTTP server
 	Backend  dbApi.Backend
 	NodeName string // Raft server ID
 	// Bootstrap should be set to true when starting the first node
 	//  of the cluster
 	StartJoinAddrs []string
 	Bootstrap      bool
+	RoutingPolicy  rkvApi.RoutingPolicy
 }
 
 // RPCAddr returns host:port

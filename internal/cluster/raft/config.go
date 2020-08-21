@@ -9,7 +9,7 @@ import (
 // Config for distributed Db
 type Config struct {
 	Raft             raft.Config
-	BindAddr         string
+	RPCAddr          string
 	StreamLayer      *StreamLayer
 	Bootstrap        bool
 	ApplyRegistrator rkvApi.ApplyRegistrator

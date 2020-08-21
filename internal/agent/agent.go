@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	rbk "github.com/tdx/rkv/internal/cluster/raft"
 	"github.com/tdx/rkv/internal/discovery"
 	"github.com/tdx/rkv/internal/registry"
+	"github.com/tdx/rkv/internal/route"
 	"github.com/tdx/rkv/internal/server"
 
 	log "github.com/hashicorp/go-hclog"
@@ -29,6 +31,7 @@ type Agent struct {
 	grpcServer *grpc.Server
 	httpServer *http.Server
 	membership *discovery.Membership
+	route      *route.Route
 
 	shutdown     bool
 	shutdownLock sync.Mutex
@@ -52,9 +55,14 @@ func New(config *Config) (*Agent, error) {
 	}
 	config.Logger = logger
 
-	logger.Info("rkvd", "node-name", config.NodeName)
-	logger.Info("rkvd", "data-dir", filepath.Dir(config.Backend.DSN()))
-	logger.Info("rkvd", "discovery-join-address", config.StartJoinAddrs)
+	rpcAddr, _ := config.RPCAddr()
+	logger.Info("config", "log-level", config.Raft.LogLevel)
+	logger.Info("config", "node-name", config.NodeName)
+	logger.Info("config", "data-dir", filepath.Dir(config.Backend.DSN()))
+	logger.Info("config", "discovery-join-address", config.StartJoinAddrs)
+	logger.Info("config", "gRPC address", rpcAddr)
+	logger.Info("config", "Raft.Heartbeat timeout", config.Raft.HeartbeatTimeout)
+	logger.Info("config", "Raft.Election timeout", config.Raft.ElectionTimeout)
 
 	a := &Agent{
 		Config:   config,
@@ -63,10 +71,11 @@ func New(config *Config) (*Agent, error) {
 	}
 
 	setup := []func() error{
+		a.setupRoute,
 		a.setupRaft,
+		a.setupMembership,
 		a.setupGrpcServer,
 		a.setupHTTPServer,
-		a.setupMembership,
 	}
 	for _, fn := range setup {
 		if err := fn(); err != nil {
@@ -76,9 +85,24 @@ func New(config *Config) (*Agent, error) {
 	return a, nil
 }
 
+func (a *Agent) setupRoute() error {
+	name := strings.Split(a.Config.NodeName, ".")
+	config := &route.Config{
+		Name:   name[0],
+		Logger: a.logger.Named("route"),
+	}
+	a.route = route.New(config)
+
+	return nil
+}
+
 func (a *Agent) setupRaft() error {
 
 	raftAddr, err := a.Config.RaftAddr()
+	if err != nil {
+		return err
+	}
+	rpcAddr, err := a.Config.RPCAddr()
 	if err != nil {
 		return err
 	}
@@ -91,6 +115,7 @@ func (a *Agent) setupRaft() error {
 	config.Raft = a.Config.Raft
 	config.Raft.Logger = a.logger.Named("raft")
 	config.Raft.LocalID = config.ServerID(a.Config.NodeName)
+	config.RPCAddr = rpcAddr
 	config.StreamLayer = rbk.NewStreamLayer(ln)
 	config.Bootstrap = a.Config.Bootstrap
 	config.ApplyRegistrator = a.registry
@@ -102,6 +127,35 @@ func (a *Agent) setupRaft() error {
 	if a.Config.Bootstrap {
 		return a.raftDb.(clusterApi.Cluster).WaitForLeader(3 * time.Second)
 	}
+	return err
+}
+
+func (a *Agent) setupMembership() error {
+	RaftAddr, err := a.Config.RaftAddr()
+	if err != nil {
+		return err
+	}
+	RPCAddr, err := a.Config.RPCAddr()
+	if err != nil {
+		return err
+	}
+
+	discoHandler := a.raftDb.(discovery.Handler)
+
+	a.membership, err = discovery.New(
+		discoHandler,
+		discovery.Config{
+			Logger:   a.logger.Named("serf"),
+			NodeName: a.Config.NodeName,
+			BindAddr: a.Config.BindAddr,
+			Tags: map[string]string{
+				"raft_addr": RaftAddr,
+				"rpc_addr":  RPCAddr,
+			},
+			StartJoinAddrs: a.Config.StartJoinAddrs,
+		},
+	)
+
 	return err
 }
 
@@ -146,7 +200,7 @@ func (a *Agent) setupHTTPServer() error {
 
 	config := &server.Config{
 		Db:     a.raftDb,
-		Logger: a.logger,
+		Logger: a.logger.Named("http"),
 	}
 
 	var err error
@@ -170,30 +224,6 @@ func (a *Agent) setupHTTPServer() error {
 	config.Logger.Info("server started", "address", a.Config.BindHTTP)
 
 	return nil
-}
-
-func (a *Agent) setupMembership() error {
-	RaftAddr, err := a.Config.RaftAddr()
-	if err != nil {
-		return err
-	}
-
-	discoHandler := a.raftDb.(discovery.Handler)
-
-	a.membership, err = discovery.New(
-		discoHandler,
-		discovery.Config{
-			Logger:   a.logger.Named("serf"),
-			NodeName: a.Config.NodeName,
-			BindAddr: a.Config.BindAddr,
-			Tags: map[string]string{
-				"raft_addr": RaftAddr,
-			},
-			StartJoinAddrs: a.Config.StartJoinAddrs,
-		},
-	)
-
-	return err
 }
 
 // Shutdown ...

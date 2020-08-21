@@ -2,8 +2,22 @@
 
 # first node of 'clean cluster' starts without 'discovery-join-addrs'
 
+log=${log:-info}
+
+while [ $# -gt 0 ]; do
+
+  if [[ $1 == *"--"* ]]; then
+    param="${1/--/}"
+    declare $param="$2"
+  fi
+
+  shift
+done
+
+
 ./rkvd --db map \
        --data-dir /tmp/rkv/1 \
+       --log-level $log \
        --discovery-addr ":8400" \
        --node-name "n1" \
        --raft-port 8401 \

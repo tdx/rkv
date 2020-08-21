@@ -23,6 +23,7 @@ func NewClient(config *api.Config) (api.Client, error) {
 		Name:  fmt.Sprintf("agent-%s", config.NodeName),
 		Level: logLevel,
 	})
+	config.Raft.LogLevel = config.LogLevel
 
 	return agent.New(&agent.Config{
 		Raft:           config.Raft,

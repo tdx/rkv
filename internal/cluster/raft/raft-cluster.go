@@ -57,13 +57,25 @@ func (d *Backend) Servers() ([]*clusterApi.Server, error) {
 		if err != nil {
 			return nil, err
 		}
-		servers = append(servers, &clusterApi.Server{
+
+		var rpcAddr string
+		s, ok := d.servers[string(server.ID)]
+		if ok {
+			rpcAddr = s.RPCAddr
+		}
+
+		srv := &clusterApi.Server{
 			ID:       string(server.ID),
-			RPCAddr:  string(server.Address),
+			RaftAddr: string(server.Address),
+			RPCAddr:  rpcAddr,
 			IsLeader: isLeader,
-		})
-		d.logger.Debug("cluster server info", "server", server.Address,
-			"leader", d.raft.Leader(), "isLeader", isLeader)
+			Online:   ok == true,
+		}
+		servers = append(servers, srv)
+
+		d.logger.Debug("cluster server info", "id", srv.ID,
+			"raftAddr", srv.RaftAddr, "rpcAddr", srv.RPCAddr,
+			"isLeader", srv.IsLeader)
 	}
 
 	return servers, nil

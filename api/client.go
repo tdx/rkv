@@ -18,7 +18,9 @@ type Client interface {
 	Put(tab, key, value []byte) error
 	Get(level ConsistencyLevel, tab, key []byte) ([]byte, error)
 	Delete(tab, key []byte) error
+
 	Shutdown() error
+
 	ApplyRegistrator
 	Apply(roLevel ConsistencyLevel,
 		fn string,

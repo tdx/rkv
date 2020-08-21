@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"net"
 
 	rkvApi "github.com/tdx/rkv/api"
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
@@ -12,13 +13,6 @@ import (
 )
 
 var _ rpcApi.StorageServer = (*grpcServer)(nil)
-
-// Config ...
-type Config struct {
-	Db     clusterApi.Backend
-	Logger log.Logger
-	Addr   string
-}
 
 type grpcServer struct {
 	*Config
@@ -85,4 +79,57 @@ func (s *grpcServer) Delete(
 	}
 
 	return &rpcApi.StorageDeleteReply{Err: ""}, nil
+}
+
+//
+func (s *grpcServer) Servers(
+	ctx context.Context,
+	req *rpcApi.ServersArgs) (*rpcApi.ServersReply, error) {
+
+	cluster := s.Db.(clusterApi.Cluster)
+	servers, err := cluster.Servers()
+	if err != nil {
+		return nil, err
+	}
+
+	grpcServers := make([]*rpcApi.Server, 0, len(servers))
+
+	for i := range servers {
+		server := servers[i]
+		grpcServers = append(grpcServers, &rpcApi.Server{
+			Id:       server.ID,
+			RpcAddr:  server.RPCAddr,
+			RaftAddr: server.RaftAddr,
+			IsLeader: server.IsLeader,
+			Online:   server.Online,
+		})
+	}
+
+	s.Logger.Debug("Servers", "servers", grpcServers)
+
+	return &rpcApi.ServersReply{Servers: grpcServers}, nil
+}
+
+func addrsEquals(addr1, addr2 string) (bool, error) {
+	h1, p1, err := net.SplitHostPort(addr1)
+	if err != nil {
+		return false, err
+	}
+
+	h2, p2, err := net.SplitHostPort(addr2)
+	if err != nil {
+		return false, err
+	}
+
+	if p1 != p2 {
+		return false, nil
+	}
+
+	if (h1 == "" && (h2 == "" || h2 == "::")) ||
+		(h2 == "" && (h1 == "" || h1 == "::")) {
+
+		return true, nil
+	}
+
+	return h1 == h2, nil
 }

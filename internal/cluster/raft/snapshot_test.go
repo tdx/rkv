@@ -90,10 +90,10 @@ func getRaftWithDir(
 	raftDir string,
 	bkTyp string) (*Backend, string) {
 
-	ports := dynaport.Get(1)
+	ports := dynaport.Get(2)
 
 	ln, err := net.Listen(
-		"tcp",
+		"tcp4",
 		fmt.Sprintf("127.0.0.1:%d", ports[0]),
 	)
 	require.NoError(t, err)
@@ -102,6 +102,7 @@ func getRaftWithDir(
 	config.Bootstrap = bootstrap
 	config.StreamLayer = NewStreamLayer(ln)
 	// config.Raft.LogLevel = "trace"
+	config.RPCAddr = fmt.Sprintf("127.0.0.1:%d", ports[1])
 	config.Raft.LocalID = raft.ServerID(id)
 	config.Raft.HeartbeatTimeout = 50 * time.Millisecond
 	config.Raft.ElectionTimeout = 50 * time.Millisecond
@@ -131,7 +132,9 @@ func addPeer(t *testing.T, leader, follower *Backend) {
 	t.Helper()
 	err := leader.Join(
 		string(follower.config.Raft.LocalID),
-		follower.Addr().String())
+		follower.RaftAddr().String(),
+		follower.config.RPCAddr,
+		false)
 	require.NoError(t, err)
 }
 

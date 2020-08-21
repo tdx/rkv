@@ -9,6 +9,8 @@ import (
 
 	dbApi "github.com/tdx/rkv/db/api"
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
+	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
+	"google.golang.org/grpc"
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/hashicorp/go-hclog"
@@ -17,7 +19,7 @@ import (
 )
 
 const (
-	raftLogCacheSize = 512
+	raftLogCacheSize = 1024
 )
 
 var _ clusterApi.Backend = (*Backend)(nil)
@@ -34,6 +36,12 @@ type Backend struct {
 	stableStore raft.StableStore
 	dataDir     string
 	restarted   bool
+
+	observationCh  chan raft.Observation
+	servers        map[string]*clusterApi.Server
+	rpcLeaderAddr  string
+	grpcLeaderConn *grpc.ClientConn
+	leaderConn     rpcApi.StorageClient
 }
 
 // New ...
@@ -56,14 +64,21 @@ func New(
 	config.Raft.Logger = logger
 
 	d := &Backend{
-		logger: logger,
-		config: config,
+		logger:  logger,
+		config:  config,
+		servers: make(map[string]*clusterApi.Server),
 		fsm: &fsm{
 			id:     string(config.Raft.LocalID),
 			logger: logger.Named("fsm"),
 			db:     db,
 			appReg: config.ApplyRegistrator,
 		},
+	}
+	id := string(config.Raft.LocalID)
+	d.servers[id] = &clusterApi.Server{
+		ID:       id,
+		RaftAddr: config.StreamLayer.Addr().String(),
+		RPCAddr:  config.RPCAddr,
 	}
 
 	dir := filepath.Dir(db.DSN())
@@ -75,8 +90,8 @@ func New(
 	return d, nil
 }
 
-// Addr returns raft transport address
-func (d *Backend) Addr() net.Addr {
+// RaftAddr returns raft transport address
+func (d *Backend) RaftAddr() net.Addr {
 	return d.config.StreamLayer.ln.Addr()
 }
 
@@ -167,9 +182,15 @@ func (d *Backend) setupRaft(dataDir string) error {
 		d.snapStore,
 		transport,
 	)
+
 	if err != nil {
 		return err
 	}
+
+	d.observationCh = make(chan raft.Observation, 1024)
+	d.raft.RegisterObserver(raft.NewObserver(d.observationCh, false, nil))
+
+	go d.waitEvents()
 
 	if d.config.Bootstrap {
 		config := raft.Configuration{

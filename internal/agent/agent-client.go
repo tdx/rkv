@@ -9,10 +9,10 @@ var _ api.Client = (*Agent)(nil)
 
 // Put ...
 func (a *Agent) Put(tab, key, value []byte) error {
-	if isLeader(a.raftDb) {
+	if a.Config.RoutingPolicy == api.RouteToLeader || isLeader(a.raftDb) {
 		return a.raftDb.Put(tab, key, value)
 	}
-	// TODO: rpc call
+
 	return api.ErrNodeIsNotALeader
 }
 
@@ -25,10 +25,10 @@ func (a *Agent) Get(
 
 // Delete ...
 func (a *Agent) Delete(tab, key []byte) error {
-	if isLeader(a.raftDb) {
+	if a.Config.RoutingPolicy == api.RouteToLeader || isLeader(a.raftDb) {
 		return a.raftDb.Delete(tab, key)
 	}
-	// TODO: rpc call
+
 	return api.ErrNodeIsNotALeader
 }
 

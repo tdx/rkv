@@ -145,7 +145,7 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 	resp := make([]interface{}, len(logs))
 	for i := range logs {
 		if len(commands) > 0 {
-			if len(commands[0]) == 1 {
+			if len(commands[i]) == 1 {
 				resp[i] = commands[i][0].Result
 				// f.logger.Trace("ApplyBatch", "log", i, "response", resp[i])
 				continue

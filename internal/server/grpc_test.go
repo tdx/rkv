@@ -33,6 +33,7 @@ func TestGrpsServer(t *testing.T) {
 		config *server.Config,
 	){
 		"put/get key-value pair over GRPC succeeds": testGrpcPutGet,
+		// "get servers test":                          testGrpcServers,
 	} {
 		t.Run(scenario, func(t *testing.T) {
 			client, config, teardown := setupGrpcTest(t)
@@ -47,17 +48,23 @@ func setupGrpcTest(
 
 	t.Helper()
 
-	l, err := net.Listen("tcp", ":0")
-	require.NoError(t, err)
-
-	clientOptions := []grpc.DialOption{grpc.WithInsecure()}
-	cc, err := grpc.Dial(l.Addr().String(), clientOptions...)
+	l, err := net.Listen("tcp4", "127.0.0.1:8801")
+	t.Log("grpc server endpoint:", l.Addr().String())
 	require.NoError(t, err)
 
 	raft, dir := getRaft(t, "1", true, "bolt")
 
 	config := &server.Config{
 		Db: raft,
+		// Disco: &ms{
+		// 	members: []*clusterApi.Server{
+		// 		{
+		// 			ID:       "1",
+		// 			RPCAddr:  l.Addr().String(),
+		// 			IsLeader: true,
+		// 		},
+		// 	},
+		// },
 	}
 
 	server, err := server.NewGRPCServer(config)
@@ -66,6 +73,10 @@ func setupGrpcTest(
 	go func() {
 		server.Serve(l)
 	}()
+
+	clientOptions := []grpc.DialOption{grpc.WithInsecure()}
+	cc, err := grpc.Dial(l.Addr().String(), clientOptions...)
+	require.NoError(t, err)
 
 	client := rpcApi.NewStorageClient(cc)
 
@@ -108,6 +119,19 @@ func testGrpcPutGet(
 	require.NoError(t, err)
 	require.Equal(t, "", getReply.Err)
 	require.Equal(t, val, getReply.Val)
+}
+
+func testGrpcServers(
+	t *testing.T,
+	client rpcApi.StorageClient,
+	config *server.Config) {
+
+	reply, err := client.Servers(context.Background(), &rpcApi.ServersArgs{})
+	time.Sleep(3 * time.Second)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(reply.Servers))
+	require.True(t, reply.Servers[0].IsLeader)
+
 }
 
 //
@@ -169,4 +193,15 @@ func getRaftWithDir(
 	}
 
 	return r, raftDir
+}
+
+//
+// Discoverer mock
+//
+type ms struct {
+	members []*clusterApi.Server
+}
+
+func (m *ms) RPCServers() ([]*clusterApi.Server, error) {
+	return m.members, nil
 }

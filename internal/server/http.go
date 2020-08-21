@@ -11,6 +11,7 @@ import (
 	"github.com/tdx/rkv/api"
 	dbApi "github.com/tdx/rkv/db/api"
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
+	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 
 	log "github.com/hashicorp/go-hclog"
 )
@@ -33,8 +34,6 @@ func NewHTTPServer(config *Config) (*http.Server, error) {
 			Name:  "http",
 			Level: log.Error,
 		})
-	} else {
-		logger = logger.Named("http")
 	}
 	config.Logger = logger
 
@@ -248,9 +247,25 @@ func (s *Server) clusterServers(w http.ResponseWriter, r *http.Request) {
 	cluster := s.db.(clusterApi.Cluster)
 	servers, err := cluster.Servers()
 	if err != nil {
+		s.logger.Error("membership RPCServers", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	grpcServers := make([]*rpcApi.Server, 0, len(servers))
+
+	for i := range servers {
+		server := servers[i]
+		grpcServers = append(grpcServers, &rpcApi.Server{
+			Id:       server.ID,
+			RpcAddr:  server.RPCAddr,
+			RaftAddr: server.RaftAddr,
+			IsLeader: server.IsLeader,
+			Online:   server.Online,
+		})
+	}
+
+	s.logger.Debug("Servers", "servers", grpcServers)
 
 	ret, err := json.Marshal(servers)
 	if err != nil {

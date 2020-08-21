@@ -30,15 +30,6 @@ func New(handler Handler, config Config) (*Membership, error) {
 	return m, nil
 }
 
-// Config ...
-type Config struct {
-	Logger         log.Logger
-	NodeName       string
-	BindAddr       string
-	Tags           map[string]string
-	StartJoinAddrs []string
-}
-
 func (m *Membership) setupSerf() (err error) {
 	logger := m.Config.Logger
 	if logger == nil {
@@ -57,7 +48,7 @@ func (m *Membership) setupSerf() (err error) {
 	config.Init()
 	config.MemberlistConfig.BindAddr = addr.IP.String()
 	config.MemberlistConfig.BindPort = addr.Port
-	m.events = make(chan serf.Event)
+	m.events = make(chan serf.Event, 32)
 	config.EventCh = m.events
 	config.Tags = m.Tags
 	config.NodeName = m.Config.NodeName
@@ -82,8 +73,8 @@ func (m *Membership) setupSerf() (err error) {
 
 // Handler ...
 type Handler interface {
-	Join(name, addr string) error
-	Leave(name, addr string) error
+	Join(name, addr, rpcAddr string, local bool) error
+	Leave(name, addr string, local bool) error
 }
 
 func (m *Membership) eventHandler() {
@@ -91,16 +82,10 @@ func (m *Membership) eventHandler() {
 		switch e.EventType() {
 		case serf.EventMemberJoin:
 			for _, member := range e.(serf.MemberEvent).Members {
-				if m.isLocal(member) {
-					continue
-				}
 				m.handleJoin(member)
 			}
-		case serf.EventMemberLeave, serf.EventMemberFailed:
+		case serf.EventMemberLeave, serf.EventMemberFailed, serf.EventMemberReap:
 			for _, member := range e.(serf.MemberEvent).Members {
-				if m.isLocal(member) {
-					return
-				}
 				m.handleLeave(member)
 			}
 		}
@@ -111,6 +96,8 @@ func (m *Membership) handleJoin(member serf.Member) {
 	if err := m.handler.Join(
 		member.Name,
 		member.Tags["raft_addr"],
+		member.Tags["rpc_addr"],
+		m.isLocal(member),
 	); err != nil {
 		m.logger.Error("JOIN",
 			"name", member.Name,
@@ -123,6 +110,7 @@ func (m *Membership) handleLeave(member serf.Member) {
 	if err := m.handler.Leave(
 		member.Name,
 		member.Tags["raft_addr"],
+		m.isLocal(member),
 	); err != nil {
 		m.logger.Error("LEAVE",
 			"name", member.Name,
