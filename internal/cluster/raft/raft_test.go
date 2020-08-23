@@ -221,31 +221,42 @@ func run(t *testing.T, bkType string) {
 
 // Need call 2 times
 func TestRestartWithState(t *testing.T) {
-	run2(t, "map")
+	baseDir := "/tmp/raft-test"
+	nodeCount := 3
+	run2(t, nodeCount, baseDir, "map")
+	run2(t, nodeCount, baseDir, "map")
+	run2(t, nodeCount, baseDir, "map")
+	for i := 0; i < nodeCount; i++ {
+		dataDir := fmt.Sprintf("%s/%d", baseDir, i)
+		os.RemoveAll(dataDir)
+	}
 }
 
-func run2(t *testing.T, bkType string) {
+func run2(t *testing.T, nodeCount int, baseDir string, bkType string) {
 	var (
 		dbs  []dbApi.Backend
 		cfgs []*rRaft.Config
 
-		nodeCount = 3
+		ports = [3][2]int{
+			{12100, 12101},
+			{12200, 12201},
+			{12400, 12401},
+		}
 	)
 
 	for i := 0; i < nodeCount; i++ {
-		ports := dynaport.Get(2)
-		dataDir := fmt.Sprintf("/tmp/raft-test/%d", i)
+		dataDir := fmt.Sprintf("%s/%d", baseDir, i)
 
 		ln, err := net.Listen(
 			"tcp",
-			fmt.Sprintf("127.0.0.1:%d", ports[0]),
+			fmt.Sprintf("127.0.0.1:%d", ports[i][0]),
 		)
 
 		require.NoError(t, err)
 
 		cfg := &rRaft.Config{}
 		cfg.StreamLayer = rRaft.NewStreamLayer(ln)
-		cfg.RPCAddr = fmt.Sprintf("127.0.0.1:%d", ports[1])
+		cfg.RPCAddr = fmt.Sprintf("127.0.0.1:%d", ports[i][1])
 		cfg.Raft.LocalID = raft.ServerID(fmt.Sprintf("%d", i))
 		cfg.Raft.HeartbeatTimeout = 50 * time.Millisecond
 		cfg.Raft.ElectionTimeout = 50 * time.Millisecond
@@ -253,6 +264,7 @@ func run2(t *testing.T, bkType string) {
 		cfg.Raft.CommitTimeout = 5 * time.Millisecond
 
 		cfg.Raft.Logger = log.New(&log.LoggerOptions{
+			Name:  fmt.Sprintf("raft-%s", cfg.Raft.LocalID),
 			Level: log.Trace,
 		})
 
@@ -284,6 +296,7 @@ func run2(t *testing.T, bkType string) {
 
 	leader, err := rRaft.New(dbs[0], cfgs[0])
 	require.NoError(t, err)
+	defer leader.Close()
 
 	restarted := leader.Restarted()
 	t.Log("---------------", restarted, "---------------")
@@ -298,20 +311,19 @@ func run2(t *testing.T, bkType string) {
 	//
 	node2, err := rRaft.New(dbs[2], cfgs[2])
 	require.NoError(t, err)
+	defer node2.Close()
 
-	if !restarted {
-		localID := "2"
-		raftAddr := node2.RaftAddr().String()
+	localID := "2"
+	raftAddr := node2.RaftAddr().String()
 
-		t.Log("join:", localID, raftAddr)
+	t.Log("join:", localID, raftAddr, "isLocal", restarted)
 
-		err = leader.Join(localID, raftAddr, cfgs[2].RPCAddr, false)
-		require.NoError(t, err)
-	}
+	err = leader.Join(localID, raftAddr, cfgs[2].RPCAddr, restarted)
+	require.NoError(t, err)
 
 	// wait for cluster with node 2
 	if restarted {
-		err = leader.WaitForLeader(3 * time.Second)
+		err = leader.WaitForLeader(5 * time.Second)
 		require.NoError(t, err)
 	}
 
@@ -320,10 +332,11 @@ func run2(t *testing.T, bkType string) {
 	//
 	node1, err := rRaft.New(dbs[1], cfgs[1])
 	require.NoError(t, err)
+	defer node1.Close()
 
 	// always join node 1
-	localID := "1"
-	raftAddr := node1.RaftAddr().String()
+	localID = "1"
+	raftAddr = node1.RaftAddr().String()
 
 	t.Log("join:", localID, raftAddr)
 
@@ -384,7 +397,7 @@ func run2(t *testing.T, bkType string) {
 	err = leader.Put(tab, newKey, val3)
 	require.NoError(t, err)
 
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	// not a leader, use ReadAny
 	v3, err := node1.Get(rkvApi.ReadAny, tab, newKey)
