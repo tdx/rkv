@@ -1,9 +1,10 @@
 #! /bin/bash
 # Make sure you grab the latest version
-curl -OL https://github.com/google/protobuf/releases/download/v3.6.1/protoc-3.6.1-linux-x86_64.zip
+#curl -OL https://github.com/google/protobuf/releases/download/v3.6.1/protoc-3.6.1-linux-x86_64.zip
+curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip
 
 # Unzip
-unzip protoc-3.6.1-linux-x86_64.zip -d protoc3
+unzip protoc-3.13.0-linux-x86_64.zip -d protoc3
 
 # Move protoc to /usr/local/bin/
 sudo cp -r protoc3/bin/* /usr/local/bin/
