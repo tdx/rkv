@@ -18,7 +18,7 @@ import (
 	"github.com/tdx/rkv/internal/route"
 	"github.com/tdx/rkv/internal/server"
 
-	log "github.com/hashicorp/go-hclog"
+	hlog "github.com/hashicorp/go-hclog"
 	"google.golang.org/grpc"
 )
 
@@ -26,7 +26,7 @@ import (
 type Agent struct {
 	*Config
 
-	logger     log.Logger
+	logger     hlog.Logger
 	raftDb     clusterApi.Backend
 	grpcServer *grpc.Server
 	httpServer *http.Server
@@ -44,11 +44,11 @@ func New(config *Config) (*Agent, error) {
 
 	logger := config.Logger
 	if logger == nil {
-		logLevel := log.LevelFromString(config.Raft.LogLevel)
-		if logLevel == log.NoLevel {
-			logLevel = log.Error
+		logLevel := hlog.LevelFromString(config.Raft.LogLevel)
+		if logLevel == hlog.NoLevel {
+			logLevel = hlog.Error
 		}
-		logger = log.New(&log.LoggerOptions{
+		logger = hlog.New(&hlog.LoggerOptions{
 			Name:  fmt.Sprintf("agent-%s", config.NodeName),
 			Level: logLevel,
 		})

@@ -1,8 +1,12 @@
 package agent
 
 import (
+	"log"
+
 	"github.com/tdx/rkv/api"
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
+
+	hlog "github.com/hashicorp/go-hclog"
 )
 
 var _ api.Client = (*Agent)(nil)
@@ -30,6 +34,14 @@ func (a *Agent) Delete(tab, key []byte) error {
 	}
 
 	return api.ErrNodeIsNotALeader
+}
+
+// Logger for client use
+func (a *Agent) Logger(subSystem string) *log.Logger {
+	out := a.logger.Named(subSystem).StandardWriter(&hlog.StandardLoggerOptions{
+		InferLevels: true,
+	})
+	return log.New(out, "", 0)
 }
 
 //

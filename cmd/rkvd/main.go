@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"path"
@@ -35,6 +36,7 @@ func main() {
 }
 
 type cli struct {
+	logger *log.Logger
 	rkvApi.Config
 }
 
@@ -121,10 +123,14 @@ func (c *cli) run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	c.logger = client.Logger("main")
+	c.logger.SetPrefix("rkvd ")
 
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
-	<-sigc
+	s := <-sigc
+
+	c.logger.Println("stopped by signal:", s.String())
 
 	return client.Shutdown()
 }

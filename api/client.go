@@ -1,5 +1,7 @@
 package api
 
+import "log"
+
 // ConsistencyLevel represents the available read consistency levels
 type ConsistencyLevel int
 
@@ -19,6 +21,7 @@ type Client interface {
 	Get(level ConsistencyLevel, tab, key []byte) ([]byte, error)
 	Delete(tab, key []byte) error
 
+	Logger(subSystem string) *log.Logger
 	Shutdown() error
 
 	ApplyRegistrator
