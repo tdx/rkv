@@ -2,13 +2,14 @@ package raft
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	rkvApi "github.com/tdx/rkv/api"
 	dbApi "github.com/tdx/rkv/db/api"
 	rpcRaft "github.com/tdx/rkv/internal/rpc/raft"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -58,7 +59,15 @@ func (d *Backend) Get(
 				Key: key,
 			})
 		if err != nil {
-			return nil, err
+			st := status.Convert(err)
+			switch st.Code() {
+			case codes.NotFound:
+				return nil, dbApi.ErrNoKey(key)
+			default:
+				d.logger.Error("grpc unexpected error", "code", st.Code(),
+					"message", st.Message())
+				return nil, rkvApi.ErrInternalError
+			}
 		}
 		return resp.Val, nil
 	}
@@ -109,7 +118,7 @@ func (d *Backend) Put(tab, key, val []byte) error {
 		}
 
 		// do leader RPC
-		resp, err := d.leaderConn.Put(
+		_, err := d.leaderConn.Put(
 			context.Background(),
 			&rpcApi.StoragePutArgs{
 				Tab: tab,
@@ -118,9 +127,6 @@ func (d *Backend) Put(tab, key, val []byte) error {
 			})
 		if err != nil {
 			return err
-		}
-		if resp.Err != "" {
-			return errors.New(resp.Err)
 		}
 		return nil
 	}
@@ -150,16 +156,24 @@ func (d *Backend) Delete(tab, key []byte) error {
 		}
 
 		// do leader RPC
-		resp, err := d.leaderConn.Delete(
+		_, err := d.leaderConn.Delete(
 			context.Background(),
 			&rpcApi.StorageDeleteArgs{
 				Tab: tab,
 				Key: key,
 			})
 		if err != nil {
-			return err
+			st := status.Convert(err)
+			switch st.Code() {
+			case codes.NotFound:
+				return dbApi.ErrNoKey(key)
+			default:
+				d.logger.Error("grpc unexpected error", "code", st.Code(),
+					"message", st.Message())
+				return rkvApi.ErrInternalError
+			}
 		}
-		return errors.New(resp.Err)
+		return err
 	}
 
 	req := &rpcRaft.LogData{

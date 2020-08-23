@@ -5,6 +5,7 @@ import (
 	"net"
 
 	rkvApi "github.com/tdx/rkv/api"
+	dbApi "github.com/tdx/rkv/db/api"
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 
@@ -34,11 +35,11 @@ func newGrpcServer(config *Config) (*grpcServer, error) {
 	logger := config.Logger
 	if logger == nil {
 		logger = log.New(&log.LoggerOptions{
-			Name:  "http",
+			Name:  "grpc",
 			Level: log.Error,
 		})
 	} else {
-		logger = logger.Named("http")
+		logger = logger.Named("grpc")
 	}
 	config.Logger = logger
 
@@ -49,12 +50,11 @@ func (s *grpcServer) Put(
 	ctx context.Context,
 	req *rpcApi.StoragePutArgs) (*rpcApi.StoragePutReply, error) {
 
-	err := s.Db.Put(req.Tab, req.Key, req.Val)
-	if err != nil {
-		return &rpcApi.StoragePutReply{Err: err.Error()}, nil
+	if err := s.Db.Put(req.Tab, req.Key, req.Val); err != nil {
+		return nil, err
 	}
 
-	return &rpcApi.StoragePutReply{Err: ""}, nil
+	return &rpcApi.StoragePutReply{}, nil
 }
 
 func (s *grpcServer) Get(
@@ -63,10 +63,17 @@ func (s *grpcServer) Get(
 
 	val, err := s.Db.Get(rkvApi.ConsistencyLevel(req.Lvl), req.Tab, req.Key)
 	if err != nil {
-		return &rpcApi.StorageGetReply{Val: nil, Err: err.Error()}, err
+		switch err.(type) {
+		case dbApi.ErrNoTable:
+			return nil, rpcApi.ErrNoTable{}
+		case dbApi.ErrNoKey:
+			return nil, rpcApi.ErrNoKey{}
+		default:
+			return nil, err
+		}
 	}
 
-	return &rpcApi.StorageGetReply{Val: val, Err: ""}, nil
+	return &rpcApi.StorageGetReply{Val: val}, nil
 }
 
 func (s *grpcServer) Delete(
@@ -75,10 +82,15 @@ func (s *grpcServer) Delete(
 
 	err := s.Db.Delete(req.Tab, req.Key)
 	if err != nil {
-		return &rpcApi.StorageDeleteReply{Err: err.Error()}, err
+		switch err.(type) {
+		case dbApi.ErrNoTable:
+			return nil, rpcApi.ErrNoTable{}
+		default:
+			return nil, err
+		}
 	}
 
-	return &rpcApi.StorageDeleteReply{Err: ""}, nil
+	return &rpcApi.StorageDeleteReply{}, nil
 }
 
 //

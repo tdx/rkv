@@ -13,9 +13,7 @@ message StoragePutArgs {
     bytes val = 3;
 }
 
-message StoragePutReply {
-    string err = 1;
-}
+message StoragePutReply {}
 
 message StorageGetArgs {
     int32 lvl = 1; // consistency level
@@ -25,7 +23,6 @@ message StorageGetArgs {
 
 message StorageGetReply {
     bytes  val = 1;
-    string err = 2;
 }
 
 message StorageDeleteArgs {
@@ -33,9 +30,7 @@ message StorageDeleteArgs {
     bytes key = 2;
 }
 
-message StorageDeleteReply {
-    string err = 1;
-}
+message StorageDeleteReply {}
 
 message Server {
   string id        = 1;

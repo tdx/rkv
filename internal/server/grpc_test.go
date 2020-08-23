@@ -21,6 +21,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 //
@@ -104,21 +106,46 @@ func testGrpcPutGet(
 		val = []byte{'v', 'a', 'l'}
 	)
 
-	putReply, err := client.Put(ctx, &rpcApi.StoragePutArgs{
+	_, err := client.Put(ctx, &rpcApi.StoragePutArgs{
 		Tab: tab,
 		Key: key,
 		Val: val,
 	})
 	require.NoError(t, err)
-	require.Equal(t, "", putReply.Err)
 
 	getReply, err := client.Get(ctx, &rpcApi.StorageGetArgs{
 		Tab: tab,
 		Key: key,
 	})
 	require.NoError(t, err)
-	require.Equal(t, "", getReply.Err)
 	require.Equal(t, val, getReply.Val)
+
+	// bad tab
+	badTab := []byte{0, 0x11}
+	resp, err := client.Get(ctx, &rpcApi.StorageGetArgs{
+		Tab: badTab,
+		Key: []byte{0, 0x11},
+	})
+	require.Nil(t, resp)
+	st := status.Convert(err)
+	require.Equal(t, codes.NotFound, st.Code())
+
+	respDel, err := client.Delete(ctx, &rpcApi.StorageDeleteArgs{
+		Tab: badTab,
+		Key: []byte{0, 0x11},
+	})
+	require.Nil(t, respDel)
+	st = status.Convert(err)
+	require.Equal(t, codes.NotFound, st.Code())
+
+	// bad key
+	respGet, err := client.Get(ctx, &rpcApi.StorageGetArgs{
+		Tab: tab,
+		Key: []byte{0, 0x11},
+	})
+	require.Nil(t, respGet)
+	st = status.Convert(err)
+	require.Equal(t, codes.NotFound, st.Code())
 }
 
 func testGrpcServers(
