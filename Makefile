@@ -10,6 +10,10 @@ pb:
 			--gogofast_out=Mgogoproto/gogo.proto=github.com/gogo/protobuf/proto,plugins=grpc:. \
 			--proto_path=$$(go list -f '{{ .Dir }}' -m github.com/gogo/protobuf) \
 			--proto_path=.
+	protoc internal/rpc/health/*.proto \
+			--gogofast_out=Mgogoproto/gogo.proto=github.com/gogo/protobuf/proto,plugins=grpc:. \
+			--proto_path=$$(go list -f '{{ .Dir }}' -m github.com/gogo/protobuf) \
+			--proto_path=.
 
 docker:
 	$(eval GIT_TAG=$(shell git describe --tags --abbrev=0))

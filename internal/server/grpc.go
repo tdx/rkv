@@ -11,6 +11,8 @@ import (
 
 	log "github.com/hashicorp/go-hclog"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 var _ rpcApi.StorageServer = (*grpcServer)(nil)
@@ -22,6 +24,11 @@ type grpcServer struct {
 // NewGRPCServer ...
 func NewGRPCServer(config *Config) (*grpc.Server, error) {
 	gsrv := grpc.NewServer()
+
+	hsrv := health.NewServer()
+	hsrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+	healthpb.RegisterHealthServer(gsrv, hsrv)
+
 	srv, err := newGrpcServer(config)
 	if err != nil {
 		return nil, err
