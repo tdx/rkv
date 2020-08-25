@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -55,7 +56,9 @@ func New(config *Config) (*Agent, error) {
 	}
 	config.Logger = logger
 
+	hostname, _ := os.Hostname()
 	rpcAddr, _ := config.RPCAddr()
+	logger.Info("", "hostname", hostname)
 	logger.Info("config", "log-level", config.Raft.LogLevel)
 	logger.Info("config", "node-name", config.NodeName)
 	logger.Info("config", "data-dir", filepath.Dir(config.Backend.DSN()))
