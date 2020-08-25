@@ -120,6 +120,7 @@ func (a *Agent) setupRaft() error {
 	config.Raft.Logger = a.logger.Named("raft")
 	config.Raft.LocalID = config.ServerID(a.Config.NodeName)
 	config.RPCAddr = rpcAddr
+	config.RaftAddr = raftAddr
 	config.StreamLayer = rbk.NewStreamLayer(ln)
 	config.Bootstrap = a.Config.Bootstrap
 	config.ApplyRegistrator = a.registry

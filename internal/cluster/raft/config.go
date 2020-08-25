@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Raft             raft.Config
 	RPCAddr          string
+	RaftAddr         string // hostname for bootstrap by name, not ip
 	StreamLayer      *StreamLayer
 	Bootstrap        bool
 	ApplyRegistrator rkvApi.ApplyRegistrator
