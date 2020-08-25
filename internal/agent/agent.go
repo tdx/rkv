@@ -58,7 +58,7 @@ func New(config *Config) (*Agent, error) {
 
 	hostname, _ := os.Hostname()
 	rpcAddr, _ := config.RPCAddr()
-	logger.Info("", "hostname", hostname)
+	logger.Info("os", "hostname", hostname)
 	logger.Info("config", "log-level", config.Raft.LogLevel)
 	logger.Info("config", "node-name", config.NodeName)
 	logger.Info("config", "data-dir", filepath.Dir(config.Backend.DSN()))

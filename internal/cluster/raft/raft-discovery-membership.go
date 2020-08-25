@@ -80,8 +80,9 @@ func (d *Backend) Join(id, raftAddr, rpcAddr string, local bool) error {
 					"raft-addr", raftAddr)
 				return nil
 			}
-			// remove the existing server
-			d.logger.Debug("JOIN remove already joined", "id", id,
+			// remove old joined server with diff address
+			//  (ex: k8s changed server address)
+			d.logger.Debug("JOIN remove old joined", "id", id,
 				"raft-addr", raftAddr)
 			removeFuture := d.raft.RemoveServer(serverID, 0, 0)
 			if err := removeFuture.Error(); err != nil {
