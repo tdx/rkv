@@ -258,8 +258,10 @@ func (s *Server) clusterServers(w http.ResponseWriter, r *http.Request) {
 		server := servers[i]
 		grpcServers = append(grpcServers, &rpcApi.Server{
 			Id:       server.ID,
-			RpcAddr:  server.RPCAddr,
-			RaftAddr: server.RaftAddr,
+			Ip:       server.IP,
+			Host:     server.Host,
+			RpcPort:  server.RPCPort,
+			RaftPort: server.RaftPort,
 			IsLeader: server.IsLeader,
 			Online:   server.Online,
 		})

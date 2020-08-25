@@ -1,12 +1,17 @@
 package api
 
-import "time"
+import (
+	"time"
+)
 
 // Server describes cluster server
 type Server struct {
 	ID       string `json:"id"`
-	RaftAddr string `json:"raft-addr"`
-	RPCAddr  string `json:"rpc-addr"`
+	IP       string `json:"ip"`
+	Host     string `json:"host"`
+	RaftPort string `json:"raft-port"`
+	RPCPort  string `json:"rpc-port"`
+	HTTPPort string `json:"http-port"`
 	IsLeader bool   `json:"leader"`
 	Online   bool   `json:"online"`
 }

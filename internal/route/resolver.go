@@ -98,12 +98,12 @@ func (r *Resolver) ResolveNow(resolver.ResolveNowOptions) {
 		if !server.IsLeader {
 			continue
 		}
-		leader = server.RpcAddr
+		leader = server.Host + ":" + server.RpcPort
 		addrs = append(addrs, resolver.Address{
-			Addr: server.RpcAddr,
+			Addr: leader,
 			Attributes: attributes.New(
 				"is_leader", server.IsLeader,
-				"rpc_addr", server.RpcAddr,
+				"rpc_addr", leader,
 			),
 		})
 	}

@@ -34,10 +34,12 @@ message StorageDeleteReply {}
 
 message Server {
   string id        = 1;
-  string rpc_addr  = 2;
-  string raft_addr = 3;
-  bool   is_leader = 4;
-  bool   online    = 5;
+  string ip        = 2;
+  string host      = 3;
+  string rpc_port  = 4;
+  string raft_port = 5;
+  bool   is_leader = 6;
+  bool   online    = 7;
 }
 
 message ServersArgs {}

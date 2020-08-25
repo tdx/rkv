@@ -53,41 +53,57 @@ func (d *Backend) Servers() ([]*clusterApi.Server, error) {
 	)
 
 	for _, server := range future.Configuration().Servers {
-		isLeader, err := addrsEquals(leaderAddr, string(server.Address))
+		isLeader, err := addrsEquals2(leaderAddr, string(server.Address))
 		if err != nil {
 			return nil, err
 		}
 
-		var rpcAddr string
+		var (
+			ip       string
+			host     string
+			rpcPort  string
+			raftPort string
+		)
 		s, ok := d.servers[string(server.ID)]
 		if ok {
-			rpcAddr = s.RPCAddr
+			ip = s.IP
+			host = s.Host
+			rpcPort = s.RPCPort
+			raftPort = s.RaftPort
 		}
 
 		srv := &clusterApi.Server{
 			ID:       string(server.ID),
-			RaftAddr: string(server.Address),
-			RPCAddr:  rpcAddr,
+			IP:       ip,
+			Host:     host,
+			RPCPort:  rpcPort,
+			RaftPort: raftPort,
 			IsLeader: isLeader,
 			Online:   ok == true,
 		}
 		servers = append(servers, srv)
 
 		d.logger.Debug("cluster server info", "id", srv.ID,
-			"raftAddr", srv.RaftAddr, "rpcAddr", srv.RPCAddr,
+			"host", srv.Host, "ip", srv.IP,
+			"raft-port", srv.RaftPort, "rpc-port", srv.RPCPort,
 			"isLeader", srv.IsLeader)
 	}
 
 	return servers, nil
 }
 
-func addrsEquals(addr1, addr2 string) (bool, error) {
-	h1, p1, err := net.SplitHostPort(addr1)
+func addrsEquals2(addr1, addr2 string) (bool, error) {
+	h2, p2, err := net.SplitHostPort(addr2)
 	if err != nil {
 		return false, err
 	}
 
-	h2, p2, err := net.SplitHostPort(addr2)
+	return addrsEquals3(addr1, h2, p2)
+}
+
+func addrsEquals3(addr1, h2, p2 string) (bool, error) {
+
+	h1, p1, err := net.SplitHostPort(addr1)
 	if err != nil {
 		return false, err
 	}
@@ -96,10 +112,12 @@ func addrsEquals(addr1, addr2 string) (bool, error) {
 		return false, nil
 	}
 
-	if (h1 == "" && (h2 == "" || h2 == "::")) ||
-		(h2 == "" && (h1 == "" || h1 == "::")) {
+	if h1 == "" || h1 == "::" || h1 == ":" || h1 == "[::]" {
+		h1 = "127.0.0.1"
+	}
 
-		return true, nil
+	if h2 == "" || h2 == "::" || h2 == ":" || h2 == "[::]" {
+		h2 = "127.0.0.1"
 	}
 
 	return h1 == h2, nil

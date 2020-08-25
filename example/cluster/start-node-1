@@ -16,9 +16,9 @@ done
 ./rkvd --db map \
        --data-dir /tmp/rkv/1 \
        --log-level $log \
-       --discovery-addr ":8400" \
+       --discovery-addr "localhost:8400" \
        --discovery-join-addrs $joins \
        --node-name "n1" \
        --raft-port 8401 \
        --rpc-port 8402 \
-       --http-addr ":8403"
+       --http-addr "localhost:8403"

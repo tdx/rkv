@@ -102,6 +102,7 @@ func (m *Membership) handleJoin(member serf.Member) {
 		m.logger.Error("JOIN",
 			"name", member.Name,
 			"address", member.Tags["raft_addr"],
+			"error", err,
 		)
 	}
 }
@@ -115,6 +116,7 @@ func (m *Membership) handleLeave(member serf.Member) {
 		m.logger.Error("LEAVE",
 			"name", member.Name,
 			"address", member.Tags["raft_addr"],
+			"error", err,
 		)
 	}
 }

@@ -75,10 +75,20 @@ func New(
 		},
 	}
 	id := string(config.Raft.LocalID)
+
+	host, ip, raftPort, rpcPort, err := parseAddrs(
+		config.StreamLayer.Addr().String(),
+		config.RPCAddr,
+	)
+	if err != nil {
+		return nil, err
+	}
 	d.servers[id] = &clusterApi.Server{
 		ID:       id,
-		RaftAddr: config.StreamLayer.Addr().String(),
-		RPCAddr:  config.RPCAddr,
+		IP:       ip,
+		Host:     host,
+		RaftPort: raftPort,
+		RPCPort:  rpcPort,
 	}
 
 	dir := filepath.Dir(db.DSN())

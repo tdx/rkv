@@ -1,6 +1,9 @@
 package raft
 
 import (
+	"fmt"
+	"net"
+
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 	"github.com/tdx/rkv/internal/discovery"
 
@@ -14,7 +17,10 @@ import (
 var _ discovery.Handler = (*Backend)(nil)
 
 // Join ...
-func (d *Backend) Join(id, addr, rpcAddr string, local bool) error {
+func (d *Backend) Join(id, raftAddr, rpcAddr string, local bool) error {
+
+	d.logger.Info("JOIN from", "id", id, "raft-addr", raftAddr, "rpc-addr",
+		rpcAddr, "local", local)
 
 	srv, ok := d.servers[id]
 	if !ok {
@@ -22,20 +28,27 @@ func (d *Backend) Join(id, addr, rpcAddr string, local bool) error {
 			ID: id,
 		}
 	}
-	oldRPCAddr := srv.RPCAddr
-	srv.RaftAddr = addr
-	srv.RPCAddr = rpcAddr
-	d.servers[id] = srv
 
-	if oldRPCAddr == "" && srv.IsLeader {
-		d.leaderChanged(raft.ServerAddress(srv.RaftAddr))
+	host, ip, raftPort, rpcPort, err := parseAddrs(raftAddr, rpcAddr)
+	if err != nil {
+		return err
 	}
 
-	d.logger.Info("JOIN from", "id", id, "addr", addr, "local", local)
+	oldRPCPort := srv.RPCPort
+	srv.IP = ip
+	srv.Host = host
+	srv.RaftPort = raftPort
+	srv.RPCPort = rpcPort
+	d.servers[id] = srv
+
+	if oldRPCPort == "" && srv.IsLeader {
+		d.leaderChanged(raft.ServerAddress(raftAddr))
+	}
 
 	for k, v := range d.servers {
-		d.logger.Info("JOIN servers", "id", k, "raftAddr", v.RaftAddr,
-			"rpcAddr", v.RPCAddr, "isLeader", v.IsLeader)
+		d.logger.Info("JOIN servers", "id", k, "host", v.Host, "ip", v.IP,
+			"raft-port", v.RaftPort, "rpc-port", v.RPCPort,
+			"isLeader", v.IsLeader)
 	}
 
 	if local {
@@ -44,7 +57,7 @@ func (d *Backend) Join(id, addr, rpcAddr string, local bool) error {
 
 	if !d.IsLeader() {
 		d.logger.Debug(
-			"JOIN from", "id", id, "addr", addr, "skip", "not leader")
+			"JOIN from", "id", id, "raft-addr", raftAddr, "skip", "not leader")
 		return nil
 	}
 
@@ -54,7 +67,7 @@ func (d *Backend) Join(id, addr, rpcAddr string, local bool) error {
 	}
 
 	serverID := raft.ServerID(id)
-	serverAddr := raft.ServerAddress(addr)
+	serverAddr := raft.ServerAddress(raftAddr)
 	servers := configFuture.Configuration().Servers
 
 	d.logger.Debug("JOIN", "servers", servers)
@@ -63,11 +76,13 @@ func (d *Backend) Join(id, addr, rpcAddr string, local bool) error {
 		if srv.ID == serverID || srv.Address == serverAddr {
 			if srv.ID == serverID && srv.Address == serverAddr {
 				// server has already joined
-				d.logger.Debug("JOIN from already joined", "id", id, "addr", addr)
+				d.logger.Debug("JOIN from already joined", "id", id,
+					"raft-addr", raftAddr)
 				return nil
 			}
 			// remove the existing server
-			d.logger.Debug("JOIN remove already joined", "id", id, "addr", addr)
+			d.logger.Debug("JOIN remove already joined", "id", id,
+				"raft-addr", raftAddr)
 			removeFuture := d.raft.RemoveServer(serverID, 0, 0)
 			if err := removeFuture.Error(); err != nil {
 				return err
@@ -75,7 +90,7 @@ func (d *Backend) Join(id, addr, rpcAddr string, local bool) error {
 		}
 	}
 
-	d.logger.Debug("JOIN AddVoter", "id", id, "addr", addr)
+	d.logger.Debug("JOIN AddVoter", "id", id, "raft-addr", raftAddr)
 
 	addFuture := d.raft.AddVoter(serverID, serverAddr, 0, 0)
 
@@ -83,16 +98,17 @@ func (d *Backend) Join(id, addr, rpcAddr string, local bool) error {
 }
 
 // Leave ...
-func (d *Backend) Leave(id, addr string, local bool) error {
+func (d *Backend) Leave(id, raftAddr string, local bool) error {
 
 	server, ok := d.servers[id]
 	delete(d.servers, id)
 
-	d.logger.Info("LEAVE from", "id", id, "addr", addr, "local", local)
+	d.logger.Info("LEAVE from", "id", id, "raft-addr", raftAddr, "local", local)
 
 	for k, v := range d.servers {
-		d.logger.Info("LEAVE servers", "id", k, "raftAddr", v.RaftAddr,
-			"rpcAddr", v.RPCAddr, "isLeader", v.IsLeader)
+		d.logger.Info("LEAVE servers", "id", k, "host", v.Host, "ip", v.IP,
+			"raft-port", v.RaftPort, "rpc-port", v.RPCPort,
+			"isLeader", v.IsLeader)
 	}
 
 	if local {
@@ -108,7 +124,7 @@ func (d *Backend) Leave(id, addr string, local bool) error {
 
 	if !d.IsLeader() {
 		d.logger.Debug(
-			"LEAVE from", "id", id, "addr", addr, "skip", "not leader")
+			"LEAVE from", "id", id, "raft-addr", raftAddr, "skip", "not leader")
 		return nil
 	}
 
@@ -141,4 +157,33 @@ func (d *Backend) checkMembers() {
 		}
 	}
 
+}
+
+func parseAddrs(
+	raftAddr, rpcAddr string) (string, string, string, string, error) {
+
+	host, raftPort, err := net.SplitHostPort(raftAddr)
+	if err != nil {
+		return "", "", "", "", err
+	}
+	if host == "" {
+		host = "localhost"
+	}
+	if host == ":" || host == "[::]" {
+		host = "ip6-localhost"
+	}
+	ip, err := net.LookupHost(host)
+	if err != nil {
+		return "", "", "", "", err
+	}
+	if len(ip) == 0 {
+		return "", "", "", "",
+			fmt.Errorf("where are no ip addresses for hostname '%s'", host)
+	}
+	_, rpcPort, err := net.SplitHostPort(rpcAddr)
+	if err != nil {
+		return "", "", "", "", err
+	}
+
+	return host, ip[0], raftPort, rpcPort, nil
 }

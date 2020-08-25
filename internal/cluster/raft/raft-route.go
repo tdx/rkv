@@ -2,8 +2,8 @@ package raft
 
 import (
 	"fmt"
-	"time"
 
+	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 
 	"github.com/hashicorp/raft"
@@ -12,33 +12,10 @@ import (
 
 //
 func (d *Backend) waitEvents() {
-	timeout := 15 * time.Second
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-
-	for {
-		if d.grpcLeaderConn == nil {
-			timeout = time.Second
-		} else {
-			timeout = 15 * time.Second
-		}
-		timer.Reset(timeout)
-
-		select {
-		case o, ok := <-d.observationCh:
-			if !ok {
-				return
-			}
-			switch r := o.Data.(type) {
-			case raft.LeaderObservation:
-				d.leaderChanged(r.Leader)
-			}
-		case _, ok := <-timer.C:
-			if !ok {
-				d.logger.Error("waitEvents timer channel errored")
-				return
-			}
-			d.leaderCheck()
+	for o := range d.observationCh {
+		switch r := o.Data.(type) {
+		case raft.LeaderObservation:
+			d.leaderChanged(r.Leader)
 		}
 	}
 }
@@ -48,15 +25,15 @@ func (d *Backend) leaderChanged(leader raft.ServerAddress) {
 
 	leaderAddr := d.raft.Leader()
 
-	d.logger.Info("leaderChanged", "event-leader", leader,
-		"raft-leader", leaderAddr, "cur-rpc-leader-addr", d.rpcLeaderAddr)
+	d.logger.Info("leaderChanged", "event-leader-addr", leader,
+		"raft-leader-addr", leaderAddr, "cur-rpc-leader-addr", d.rpcLeaderAddr)
 
-	var rpcLeaderAddr string
+	var leaderServer *clusterApi.Server
 	for _, server := range d.servers {
-		ok, _ := addrsEquals(string(leaderAddr), server.RaftAddr)
+		ok, _ := addrsEquals3(string(leaderAddr), server.IP, server.RaftPort)
 		if ok {
 			server.IsLeader = true
-			rpcLeaderAddr = server.RPCAddr
+			leaderServer = server
 			continue
 		}
 		if server.IsLeader {
@@ -64,9 +41,9 @@ func (d *Backend) leaderChanged(leader raft.ServerAddress) {
 		}
 	}
 
-	if rpcLeaderAddr == "" {
-		d.logger.Error("leaderChanged", "event-leader", leader,
-			"raft-leader", leaderAddr, "error", "empty leader RPCAddr")
+	if leaderServer == nil {
+		d.logger.Error("leaderChanged", "event-leader-addr", leader,
+			"raft-leader-addr", leaderAddr, "error", "empty leader RPCAddr")
 		return
 	}
 
@@ -79,6 +56,8 @@ func (d *Backend) leaderChanged(leader raft.ServerAddress) {
 		return
 	}
 
+	rpcLeaderAddr := leaderServer.IP + ":" + leaderServer.RPCPort
+
 	if d.rpcLeaderAddr == rpcLeaderAddr {
 		return
 	}
@@ -86,7 +65,7 @@ func (d *Backend) leaderChanged(leader raft.ServerAddress) {
 	d.closeLeaderCon()
 
 	d.logger.Info("leaderChanged: setup route to leader",
-		"event-leader", leader, "raft-leader", leaderAddr,
+		"event-leader", leader, "raft-leader-addr", leaderAddr,
 		"rpc-leader-addr", rpcLeaderAddr)
 
 	selfNodeName := string(d.config.Raft.LocalID)
@@ -98,7 +77,7 @@ func (d *Backend) leaderChanged(leader raft.ServerAddress) {
 	)
 	if err != nil {
 		d.logger.Error("leaderChanged",
-			"event-leader", leader, "raft-leader", leaderAddr,
+			"event-leader", leader, "raft-leader-addr", leaderAddr,
 			"rpc-leader-addr", rpcLeaderAddr,
 			"grpc-leader-conn", err)
 		return
@@ -109,15 +88,10 @@ func (d *Backend) leaderChanged(leader raft.ServerAddress) {
 	d.leaderConn = rpcApi.NewStorageClient(conn)
 }
 
-func (d *Backend) leaderCheck() {
-	// send current leader to balancer routine
-	// currentLeader(d.LeaderAddr())
-}
-
 func (d *Backend) closeLeaderCon() {
 	// close previouse connection to leader
 	if d.grpcLeaderConn != nil {
-		d.logger.Debug("closeLeaderCon", "rpc-leader", d.rpcLeaderAddr)
+		d.logger.Debug("closeLeaderCon", "rpc-leader-addr", d.rpcLeaderAddr)
 		d.grpcLeaderConn.Close()
 		d.grpcLeaderConn = nil
 		d.leaderConn = nil
