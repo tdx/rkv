@@ -62,6 +62,7 @@ func New(config *Config) (*Agent, error) {
 	logger.Info("config", "log-level", config.Raft.LogLevel)
 	logger.Info("config", "node-name", config.NodeName)
 	logger.Info("config", "data-dir", filepath.Dir(config.Backend.DSN()))
+	logger.Info("config", "db", config.Backend.DSN())
 	logger.Info("config", "discovery-join-address", config.StartJoinAddrs)
 	logger.Info("config", "gRPC address", rpcAddr)
 	logger.Info("config", "Raft.Heartbeat timeout", config.Raft.HeartbeatTimeout)
