@@ -86,7 +86,8 @@ func (d *Backend) Servers() ([]*clusterApi.Server, error) {
 		d.logger.Debug("cluster server info", "id", srv.ID,
 			"host", srv.Host, "ip", srv.IP,
 			"raft-port", srv.RaftPort, "rpc-port", srv.RPCPort,
-			"isLeader", srv.IsLeader)
+			"isLeader", srv.IsLeader,
+			"raft-leader-addr", leaderAddr, "server-addr", server.Address)
 	}
 
 	return servers, nil

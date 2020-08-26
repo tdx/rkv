@@ -207,7 +207,6 @@ func (d *Backend) setupRaft(dataDir string) error {
 			Servers: []raft.Server{{
 				ID:      config.LocalID,
 				Address: raft.ServerAddress(d.config.RaftAddr),
-				// Address: transport.LocalAddr(),
 			}},
 		}
 		// error can be safety ignored

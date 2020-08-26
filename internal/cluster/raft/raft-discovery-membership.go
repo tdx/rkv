@@ -141,7 +141,7 @@ func (d *Backend) checkMembers() {
 
 	future := d.raft.GetConfiguration()
 	if err := future.Error(); err != nil {
-		d.logger.Error("checkMembers", "GetConfiguration", err)
+		d.logger.Error("checkMembers GetConfiguration", "error", err)
 		return
 	}
 
@@ -149,11 +149,12 @@ func (d *Backend) checkMembers() {
 	for _, server := range future.Configuration().Servers {
 		_, ok := d.servers[string(server.ID)]
 		if !ok {
-			d.logger.Info("checkMembers", "remove-server", server.Address)
+			d.logger.Info("checkMembers remove Raft server",
+				"id", server.ID, "addr", server.Address)
 			removeFuture := d.raft.RemoveServer(server.ID, 0, 0)
 			if err := removeFuture.Error(); err != nil {
-				d.logger.Error("checkMembers",
-					"remove-server", server.Address, "error", err)
+				d.logger.Error("checkMembers remove Raft server",
+					"id", server.ID, "addr", server.Address, "error", err)
 			}
 		}
 	}

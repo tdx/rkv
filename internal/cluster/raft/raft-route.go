@@ -41,6 +41,13 @@ func (d *Backend) leaderChanged(leader raft.ServerAddress) {
 		}
 	}
 
+	for k, v := range d.servers {
+		d.logger.Info("leaderChanged server",
+			"id", k, "host", v.Host, "ip", v.IP,
+			"raft-port", v.RaftPort, "rpc-port", v.RPCPort,
+			"isLeader", v.IsLeader)
+	}
+
 	if leaderServer == nil {
 		d.logger.Error("leaderChanged", "event-leader-addr", leader,
 			"raft-leader-addr", leaderAddr, "error", "empty leader RPCAddr")

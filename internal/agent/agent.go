@@ -154,8 +154,9 @@ func (a *Agent) setupMembership() error {
 			NodeName: a.Config.NodeName,
 			BindAddr: a.Config.BindAddr,
 			Tags: map[string]string{
-				"raft_addr": RaftAddr,
 				"rpc_addr":  RPCAddr,
+				"raft_addr": RaftAddr,
+				"http_addr": a.Config.BindHTTP,
 			},
 			StartJoinAddrs: a.Config.StartJoinAddrs,
 		},
