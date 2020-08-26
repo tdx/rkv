@@ -129,7 +129,7 @@ func (a *Agent) setupRaft() error {
 	if err != nil {
 		return err
 	}
-	if a.Config.Bootstrap {
+	if a.Config.Bootstrap && !a.raftDb.(clusterApi.Cluster).Restarted() {
 		return a.raftDb.(clusterApi.Cluster).WaitForLeader(3 * time.Second)
 	}
 	return err

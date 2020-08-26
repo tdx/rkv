@@ -22,4 +22,5 @@ type Cluster interface {
 	IsLeader() bool
 	LeaderAddr() string
 	Servers() ([]*Server, error)
+	Restarted() bool
 }
