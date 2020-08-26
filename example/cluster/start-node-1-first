@@ -2,7 +2,12 @@
 
 # first node of 'clean cluster' starts without 'discovery-join-addrs'
 
+# script uses named parameters
+# ex:
+# --log debug --hostname localhost
+
 log=${log:-info}
+hostname=${hostname:-}
 
 while [ $# -gt 0 ]; do
 
@@ -18,8 +23,8 @@ done
 ./rkvd --db map \
        --data-dir /tmp/rkv/1 \
        --log-level $log \
-       --discovery-addr ":8400" \
+       --discovery-addr "$hostname:8400" \
        --node-name "n1" \
        --raft-port 8401 \
        --rpc-port 8402 \
-       --http-addr ":8403"
+       --http-addr "$hostname:8403"

@@ -1,7 +1,12 @@
 #!/bin/sh
 
+# script uses named parameters
+# ex:
+# --log debug --hostname localhost
+
 joins=${joins:-127.0.0.1:8500,127.0.0.1:8600}
 log=${log:-info}
+hostname=${hostname:-}
 
 while [ $# -gt 0 ]; do
 
@@ -16,9 +21,9 @@ done
 ./rkvd --db map \
        --data-dir /tmp/rkv/1 \
        --log-level $log \
-       --discovery-addr "localhost:8400" \
+       --discovery-addr "$hostname:8400" \
        --discovery-join-addrs $joins \
        --node-name "n1" \
        --raft-port 8401 \
        --rpc-port 8402 \
-       --http-addr "localhost:8403"
+       --http-addr "$hostname:8403"

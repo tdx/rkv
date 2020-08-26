@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# script used named parameters
+# script uses named parameters
 # ex:
 # get --port 8503 --key 332244
 #  'key' - hex encoded string
@@ -8,8 +8,7 @@
 port=${port:-8403}
 key=${key:-aabbcc}
 tab=${tab:-test}
-
-hostname=`hostname`
+hostname=${hostname:-`hostname`}
 
 while [ $# -gt 0 ]; do
 
