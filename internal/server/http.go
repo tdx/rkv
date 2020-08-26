@@ -42,6 +42,7 @@ func NewHTTPServer(config *Config) (*http.Server, error) {
 	s := &Server{
 		db:     config.Db,
 		logger: config.Logger,
+		joiner: config.Joiner,
 	}
 
 	return &http.Server{

@@ -50,7 +50,9 @@ func newGrpcServer(config *Config) (*grpcServer, error) {
 	}
 	config.Logger = logger
 
-	return &grpcServer{Config: config}, nil
+	return &grpcServer{
+		Config: config,
+	}, nil
 }
 
 func (s *grpcServer) Put(
