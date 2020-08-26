@@ -30,6 +30,11 @@ func New(handler Handler, config Config) (*Membership, error) {
 	return m, nil
 }
 
+// Join joins node to serf cluster
+func (m *Membership) Join(existing []string) (int, error) {
+	return m.serf.Join(existing, true)
+}
+
 func (m *Membership) setupSerf() (err error) {
 	logger := m.Config.Logger
 	if logger == nil {
@@ -92,9 +97,6 @@ func (m *Membership) eventHandler() {
 	}
 }
 
-// member.Tags["raft_addr"],
-// member.Tags["rpc_addr"],
-
 func (m *Membership) handleJoin(member serf.Member) {
 	if err := m.handler.Join(
 		member.Name,
@@ -108,8 +110,6 @@ func (m *Membership) handleJoin(member serf.Member) {
 		)
 	}
 }
-
-// member.Tags["raft_addr"],
 
 func (m *Membership) handleLeave(member serf.Member) {
 	if err := m.handler.Leave(

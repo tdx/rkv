@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 
 // Server ...
 type Server struct {
+	joiner Joiner
 	db     clusterApi.Backend
 	logger log.Logger
 }
@@ -62,6 +64,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.clusterServers(w, r)
 	case strings.HasPrefix(r.URL.Path, "/cluster/leader"):
 		s.clusterLeader(w, r)
+	case strings.HasPrefix(r.URL.Path, "/cluster/join"):
+		s.clusterJoin(w, r)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 	}
@@ -329,6 +333,40 @@ func (s *Server) clusterLeader(w http.ResponseWriter, r *http.Request) {
 	leader := cluster.LeaderAddr()
 
 	ret := `{"leader":"` + leader + `"}`
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(ret))
+}
+
+func (s *Server) clusterJoin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	args, ok := s.parseArgs(r)
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	addrsStr, ok := args["addrs"]
+	if !ok || addrsStr == "" {
+		s.logger.Error("join argument error", "addrs", addrsStr)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	addrs := strings.Split(addrsStr, ",")
+
+	n, err := s.joiner.Join(addrs)
+	if err != nil {
+		s.logger.Error("join", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	ret := `{"joined":"` + strconv.Itoa(n) + `"}`
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

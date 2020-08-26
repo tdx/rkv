@@ -168,7 +168,8 @@ func (a *Agent) setupMembership() error {
 
 func (a *Agent) setupGrpcServer() error {
 	config := &server.Config{
-		Db: a.raftDb,
+		Db:     a.raftDb,
+		Joiner: a.membership,
 	}
 
 	var err error
@@ -208,6 +209,7 @@ func (a *Agent) setupHTTPServer() error {
 	config := &server.Config{
 		Db:     a.raftDb,
 		Logger: a.logger.Named("http"),
+		Joiner: a.membership,
 	}
 
 	var err error
