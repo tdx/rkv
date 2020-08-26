@@ -48,21 +48,17 @@ func (d *Backend) Servers() ([]*clusterApi.Server, error) {
 	}
 
 	var (
-		leaderAddr = string(d.raft.Leader())
-		servers    []*clusterApi.Server
+		servers []*clusterApi.Server
 	)
 
 	for _, server := range future.Configuration().Servers {
-		isLeader, err := addrsEquals2(leaderAddr, string(server.Address))
-		if err != nil {
-			return nil, err
-		}
-
 		var (
 			ip       string
 			host     string
 			rpcPort  string
 			raftPort string
+			httpPort string
+			isLeader bool
 		)
 		s, ok := d.servers[string(server.ID)]
 		if ok {
@@ -70,6 +66,8 @@ func (d *Backend) Servers() ([]*clusterApi.Server, error) {
 			host = s.Host
 			rpcPort = s.RPCPort
 			raftPort = s.RaftPort
+			httpPort = s.HTTPPort
+			isLeader = s.IsLeader
 		}
 
 		srv := &clusterApi.Server{
@@ -78,6 +76,7 @@ func (d *Backend) Servers() ([]*clusterApi.Server, error) {
 			Host:     host,
 			RPCPort:  rpcPort,
 			RaftPort: raftPort,
+			HTTPPort: httpPort,
 			IsLeader: isLeader,
 			Online:   ok == true,
 		}
@@ -86,8 +85,7 @@ func (d *Backend) Servers() ([]*clusterApi.Server, error) {
 		d.logger.Debug("cluster server info", "id", srv.ID,
 			"host", srv.Host, "ip", srv.IP,
 			"raft-port", srv.RaftPort, "rpc-port", srv.RPCPort,
-			"isLeader", srv.IsLeader,
-			"raft-leader-addr", leaderAddr, "server-addr", server.Address)
+			"http-port", srv.HTTPPort, "isLeader", srv.IsLeader)
 	}
 
 	return servers, nil
