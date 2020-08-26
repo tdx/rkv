@@ -9,6 +9,8 @@ port=${port:-8403}
 key=${key:-aabbcc}
 tab=${tab:-test}
 
+hostname=`hostname`
+
 while [ $# -gt 0 ]; do
 
   if [[ $1 == *"--"* ]]; then
@@ -22,4 +24,4 @@ done
 curl -v -X POST \
 	-H "Content-Type: application/json" \
 	-d '{"tab":"'$tab'","key":"'$key'"}' \
-	http://localhost:$port/db/del
+	http://$hostname:$port/db/del

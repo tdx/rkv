@@ -10,6 +10,8 @@ key=${key:-aabbcc}
 val=${val:-00112233}
 tab=${tab:-test}
 
+hostname=`hostname`
+
 while [ $# -gt 0 ]; do
 
    if [[ $1 == *"--"* ]]; then
@@ -23,5 +25,5 @@ done
 curl -v -X POST \
 	-H "Content-Type: application/json" \
 	-d '{"tab": "'$tab'","key":"'$key'","val":"'$val'"}' \
-        http://localhost:$port/db/put
+        http://$hostname:$port/db/put
 

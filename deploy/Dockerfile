@@ -10,4 +10,7 @@ ${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
 FROM nicolaka/netshoot
 COPY --from=build /go/bin/rkvd /bin/rkvd
 COPY --from=build /go/bin/grpc_health_probe /bin/grpc_health_probe
+COPY example/cluster/put /bin/put
+COPY example/cluster/get /bin/get
+COPY example/cluster/del /bin/del
 ENTRYPOINT ["/bin/rkvd"]
