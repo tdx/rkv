@@ -160,7 +160,9 @@ func (d *Backend) checkMembers() {
 	}
 
 	// find members not in cluster
-	for _, server := range future.Configuration().Servers {
+	var deleted bool
+	raftServers := future.Configuration().Servers
+	for _, server := range raftServers {
 		_, ok := d.servers[string(server.ID)]
 		if !ok {
 			d.logger.Info("checkMembers remove Raft server",
@@ -170,9 +172,31 @@ func (d *Backend) checkMembers() {
 				d.logger.Error("checkMembers remove Raft server",
 					"id", server.ID, "addr", server.Address, "error", err)
 			}
+			deleted = true
 		}
 	}
+	if deleted {
+		raftServers = future.Configuration().Servers
+	}
 
+	// find members not in raft cluster config and add them as voters
+	for id, serfServer := range d.servers {
+		for _, raftServer := range raftServers {
+			if id == string(raftServer.ID) {
+				continue
+			}
+		}
+		// add server to raft
+		raftAddr := serfServer.Host + ":" + serfServer.RaftPort
+		d.logger.Info("found serf server not in cluster", "id", id,
+			"raft-addr", raftAddr)
+		addFuture := d.raft.AddVoter(
+			raft.ServerID(id), raft.ServerAddress(raftAddr), 0, 0)
+		if err := addFuture.Error(); err != nil {
+			d.logger.Error("addVoter failed", "id", id, "raft-addr", raftAddr,
+				"error", err)
+		}
+	}
 }
 
 func parseAddrs(
