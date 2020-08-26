@@ -17,7 +17,15 @@ import (
 var _ discovery.Handler = (*Backend)(nil)
 
 // Join ...
-func (d *Backend) Join(id, raftAddr, rpcAddr string, local bool) error {
+// func (d *Backend) Join(id, raftAddr, rpcAddr string, local bool) error {
+func (d *Backend) Join(id string, tags map[string]string, local bool) error {
+
+	var (
+		rpcAddr  = tags["rpc_addr"]
+		raftAddr = tags["raft_addr"]
+		httpAddr = tags["http_addr"]
+		serfAddr = tags["serf_addr"]
+	)
 
 	d.logger.Info("JOIN from", "id", id, "raft-addr", raftAddr, "rpc-addr",
 		rpcAddr, "local", local)
@@ -39,6 +47,9 @@ func (d *Backend) Join(id, raftAddr, rpcAddr string, local bool) error {
 	srv.Host = host
 	srv.RaftPort = raftPort
 	srv.RPCPort = rpcPort
+	srv.HTTPBindAddr = httpAddr
+	srv.SerfBindAddr = serfAddr
+	srv.IsLocal = local
 	d.servers[id] = srv
 
 	if oldRPCPort == "" && srv.IsLeader {
@@ -99,7 +110,10 @@ func (d *Backend) Join(id, raftAddr, rpcAddr string, local bool) error {
 }
 
 // Leave ...
-func (d *Backend) Leave(id, raftAddr string, local bool) error {
+// func (d *Backend) Leave(id, raftAddr string, local bool) error {
+func (d *Backend) Leave(id string, tags map[string]string, local bool) error {
+
+	raftAddr := tags["raft_addr"]
 
 	server, ok := d.servers[id]
 	delete(d.servers, id)

@@ -130,10 +130,13 @@ func getRaftWithDir(
 
 func addPeer(t *testing.T, leader, follower *Backend) {
 	t.Helper()
+	tags := map[string]string{
+		"raft_addr": follower.RaftAddr().String(),
+		"rpc_addr":  follower.config.RPCAddr,
+	}
 	err := leader.Join(
 		string(follower.config.Raft.LocalID),
-		follower.RaftAddr().String(),
-		follower.config.RPCAddr,
+		tags,
 		false)
 	require.NoError(t, err)
 }

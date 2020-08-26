@@ -1,6 +1,7 @@
 package raft
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -63,6 +64,10 @@ func New(
 	}
 	config.Raft.Logger = logger
 
+	if err := checkConfig(config); err != nil {
+		return nil, err
+	}
+
 	d := &Backend{
 		logger:  logger,
 		config:  config,
@@ -74,8 +79,10 @@ func New(
 			appReg: config.ApplyRegistrator,
 		},
 	}
-	id := string(config.Raft.LocalID)
 
+	//
+	// add self to servers
+	//
 	host, ip, raftPort, rpcPort, err := parseAddrs(
 		config.RaftAddr,
 		config.RPCAddr,
@@ -83,12 +90,15 @@ func New(
 	if err != nil {
 		return nil, err
 	}
+
+	id := string(config.Raft.LocalID)
 	d.servers[id] = &clusterApi.Server{
 		ID:       id,
 		IP:       ip,
 		Host:     host,
 		RaftPort: raftPort,
 		RPCPort:  rpcPort,
+		IsLocal:  true,
 	}
 
 	dir := filepath.Dir(db.DSN())
@@ -254,4 +264,15 @@ func (d *Backend) applyLog(req proto.Marshaler) (interface{}, error) {
 	}
 
 	return res, nil
+}
+
+//
+func checkConfig(c *Config) error {
+	if c.RPCAddr == "" {
+		return errors.New("config.RPCAddr is empty")
+	}
+	if c.RaftAddr == "" {
+		return errors.New("config.RaftAddr is empty")
+	}
+	return nil
 }

@@ -48,7 +48,7 @@ func (m *Membership) setupSerf() (err error) {
 	config.Init()
 	config.MemberlistConfig.BindAddr = addr.IP.String()
 	config.MemberlistConfig.BindPort = addr.Port
-	m.events = make(chan serf.Event, 32)
+	m.events = make(chan serf.Event)
 	config.EventCh = m.events
 	config.Tags = m.Tags
 	config.NodeName = m.Config.NodeName
@@ -73,8 +73,8 @@ func (m *Membership) setupSerf() (err error) {
 
 // Handler ...
 type Handler interface {
-	Join(name, addr, rpcAddr string, local bool) error
-	Leave(name, addr string, local bool) error
+	Join(name string, tags map[string]string, local bool) error
+	Leave(name string, tags map[string]string, local bool) error
 }
 
 func (m *Membership) eventHandler() {
@@ -92,29 +92,33 @@ func (m *Membership) eventHandler() {
 	}
 }
 
+// member.Tags["raft_addr"],
+// member.Tags["rpc_addr"],
+
 func (m *Membership) handleJoin(member serf.Member) {
 	if err := m.handler.Join(
 		member.Name,
-		member.Tags["raft_addr"],
-		member.Tags["rpc_addr"],
+		member.Tags,
 		m.isLocal(member),
 	); err != nil {
 		m.logger.Error("JOIN",
-			"name", member.Name,
+			"id", member.Name,
 			"address", member.Tags["raft_addr"],
 			"error", err,
 		)
 	}
 }
 
+// member.Tags["raft_addr"],
+
 func (m *Membership) handleLeave(member serf.Member) {
 	if err := m.handler.Leave(
 		member.Name,
-		member.Tags["raft_addr"],
+		member.Tags,
 		m.isLocal(member),
 	); err != nil {
 		m.logger.Error("LEAVE",
-			"name", member.Name,
+			"id", member.Name,
 			"address", member.Tags["raft_addr"],
 			"error", err,
 		)

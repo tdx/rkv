@@ -40,11 +40,11 @@ func run(t *testing.T, bkType string) {
 		nodes []*rRaft.Backend
 
 		nodeCount     = 3
-		ports         = dynaport.Get(nodeCount)
 		commitTimeout = 5 * time.Millisecond
 	)
 
 	for i := 0; i < nodeCount; i++ {
+		ports := dynaport.Get(2)
 		dataDir, err := ioutil.TempDir("", "raft-db-test")
 		require.NoError(t, err)
 
@@ -52,15 +52,15 @@ func run(t *testing.T, bkType string) {
 			_ = os.RemoveAll(dir)
 		}(dataDir)
 
-		ln, err := net.Listen(
-			"tcp",
-			fmt.Sprintf("127.0.0.1:%d", ports[i]),
-		)
+		raftAddr := fmt.Sprintf("127.0.0.1:%d", ports[0])
+		ln, err := net.Listen("tcp", raftAddr)
 
 		require.NoError(t, err)
 
 		config := &rRaft.Config{}
 		config.StreamLayer = rRaft.NewStreamLayer(ln)
+		config.RPCAddr = fmt.Sprintf("127.0.0.1:%d", ports[1])
+		config.RaftAddr = raftAddr
 		config.Raft.LogLevel = "trace"
 		config.Raft.LocalID = raft.ServerID(fmt.Sprintf("%d", i))
 		config.Raft.HeartbeatTimeout = 50 * time.Millisecond
@@ -87,7 +87,11 @@ func run(t *testing.T, bkType string) {
 		require.NoError(t, err)
 
 		if i != 0 {
-			err = nodes[0].Join(fmt.Sprintf("%d", i), ln.Addr().String(), "", false)
+			tags := map[string]string{
+				"raft_addr": raftAddr,
+				"rpc_addr":  config.RPCAddr,
+			}
+			err = nodes[0].Join(fmt.Sprintf("%d", i), tags, false)
 		} else {
 			err = node.WaitForLeader(3 * time.Second)
 		}
@@ -131,7 +135,10 @@ func run(t *testing.T, bkType string) {
 	}
 
 	// remove node "1" from cluster
-	err := nodes[0].Leave("1", "", false)
+	tags := map[string]string{
+		"raft_addr": "",
+	}
+	err := nodes[0].Leave("1", tags, false)
 	require.NoError(t, err)
 
 	time.Sleep(50 * time.Millisecond)
@@ -223,9 +230,9 @@ func run(t *testing.T, bkType string) {
 func TestRestartWithState(t *testing.T) {
 	baseDir := "/tmp/raft-test"
 	nodeCount := 3
-	run2(t, nodeCount, baseDir, "map")
-	run2(t, nodeCount, baseDir, "map")
-	run2(t, nodeCount, baseDir, "map")
+	run2(t, nodeCount, baseDir, "bolt")
+	run2(t, nodeCount, baseDir, "bolt")
+	run2(t, nodeCount, baseDir, "bolt")
 	for i := 0; i < nodeCount; i++ {
 		dataDir := fmt.Sprintf("%s/%d", baseDir, i)
 		os.RemoveAll(dataDir)
@@ -237,10 +244,10 @@ func run2(t *testing.T, nodeCount int, baseDir string, bkType string) {
 		dbs  []dbApi.Backend
 		cfgs []*rRaft.Config
 
-		ports = [3][2]int{
-			{12100, 12101},
-			{12200, 12201},
-			{12400, 12401},
+		ports = [3][3]int{
+			{12100, 12101, 12102},
+			{12200, 12201, 12202},
+			{12400, 12401, 12402},
 		}
 	)
 
@@ -257,6 +264,7 @@ func run2(t *testing.T, nodeCount int, baseDir string, bkType string) {
 		cfg := &rRaft.Config{}
 		cfg.StreamLayer = rRaft.NewStreamLayer(ln)
 		cfg.RPCAddr = fmt.Sprintf("127.0.0.1:%d", ports[i][1])
+		cfg.RaftAddr = fmt.Sprintf("127.0.0.1:%d", ports[i][2])
 		cfg.Raft.LocalID = raft.ServerID(fmt.Sprintf("%d", i))
 		cfg.Raft.HeartbeatTimeout = 50 * time.Millisecond
 		cfg.Raft.ElectionTimeout = 50 * time.Millisecond
@@ -318,7 +326,11 @@ func run2(t *testing.T, nodeCount int, baseDir string, bkType string) {
 
 	t.Log("join:", localID, raftAddr, "isLocal", restarted)
 
-	err = leader.Join(localID, raftAddr, cfgs[2].RPCAddr, restarted)
+	tags := map[string]string{
+		"raft_addr": raftAddr,
+		"rpc_addr":  cfgs[2].RPCAddr,
+	}
+	err = leader.Join(localID, tags, restarted)
 	require.NoError(t, err)
 
 	// wait for cluster with node 2
@@ -340,7 +352,11 @@ func run2(t *testing.T, nodeCount int, baseDir string, bkType string) {
 
 	t.Log("join:", localID, raftAddr)
 
-	err = leader.Join(localID, raftAddr, cfgs[1].RPCAddr, false)
+	tags = map[string]string{
+		"raft_addr": raftAddr,
+		"rpc_addr":  cfgs[1].RPCAddr,
+	}
+	err = leader.Join(localID, tags, false)
 	require.NoError(t, err)
 
 	var (
@@ -384,7 +400,10 @@ func run2(t *testing.T, nodeCount int, baseDir string, bkType string) {
 	}
 
 	// remove node "1" from cluster
-	err = leader.Leave("1", "", false)
+	tags = map[string]string{
+		"raft_addr": "",
+	}
+	err = leader.Leave("1", tags, false)
 	require.NoError(t, err)
 
 	time.Sleep(50 * time.Millisecond)
@@ -459,8 +478,12 @@ func TestRaftApply(t *testing.T) {
 		require.NoError(t, err)
 
 		if i != 0 {
+			tags := map[string]string{
+				"raft_addr": ln.Addr().String(),
+				"rpc_addr":  config.RPCAddr,
+			}
 			err = nodes[0].Join(
-				fmt.Sprintf("%d", i), ln.Addr().String(), config.RPCAddr, false)
+				fmt.Sprintf("%d", i), tags, false)
 		} else {
 			err = node.WaitForLeader(3 * time.Second)
 		}

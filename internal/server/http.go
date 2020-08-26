@@ -94,23 +94,39 @@ func (s *Server) dbPut(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	keyb, err := hex.DecodeString(key)
-	if err != nil {
-		s.logger.Error("put bad hex", "key", key)
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	var (
+		err  error
+		keyb []byte
+	)
+	isHex, okHex := args["hex"]
+	if okHex && isHex == "true" {
+		keyb, err = hex.DecodeString(key)
+		if err != nil {
+			s.logger.Error("put bad hex", "key", key)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	} else {
+		keyb = []byte(key)
 	}
+
 	val, ok := args["val"]
 	if !ok || val == "" {
 		s.logger.Error("put argument error", "val", val)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	valb, err := hex.DecodeString(val)
-	if err != nil {
-		s.logger.Error("put bad hex", "val", val)
-		w.WriteHeader(http.StatusBadRequest)
-		return
+
+	var valb []byte
+	if okHex && isHex == "true" {
+		valb, err = hex.DecodeString(val)
+		if err != nil {
+			s.logger.Error("put bad hex", "val", val)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	} else {
+		valb = []byte(val)
 	}
 
 	if err := s.db.Put([]byte(tab), keyb, valb); err != nil {
@@ -150,11 +166,20 @@ func (s *Server) dbGet(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	keyb, err := hex.DecodeString(key)
-	if err != nil {
-		s.logger.Error("get bad hex", "key", key)
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	var (
+		err  error
+		keyb []byte
+	)
+	isHex, ok := args["hex"]
+	if ok && isHex == "true" {
+		keyb, err = hex.DecodeString(key)
+		if err != nil {
+			s.logger.Error("get bad hex", "key", key)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	} else {
+		keyb = []byte(key)
 	}
 
 	valb, err := s.db.Get(api.ReadAny, []byte(tab), keyb)
@@ -173,7 +198,12 @@ func (s *Server) dbGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	val := hex.EncodeToString(valb)
+	var val string
+	if isHex == "true" {
+		val = hex.EncodeToString(valb)
+	} else {
+		val = string(valb)
+	}
 
 	ret := `{"val":"` + val + `"}`
 
@@ -206,11 +236,20 @@ func (s *Server) dbDel(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	keyb, err := hex.DecodeString(key)
-	if err != nil {
-		s.logger.Error("put bad hex", "key", key)
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	var (
+		err  error
+		keyb []byte
+	)
+	isHex, ok := args["hex"]
+	if ok && isHex == "true" {
+		keyb, err = hex.DecodeString(key)
+		if err != nil {
+			s.logger.Error("put bad hex", "key", key)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	} else {
+		keyb = []byte(key)
 	}
 
 	if err := s.db.Delete([]byte(tab), keyb); err != nil {

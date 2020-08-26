@@ -58,6 +58,7 @@ func (d *Backend) Servers() ([]*clusterApi.Server, error) {
 			rpcPort  string
 			raftPort string
 			httpPort string
+			serfAddr string
 			isLeader bool
 		)
 		s, ok := d.servers[string(server.ID)]
@@ -66,26 +67,29 @@ func (d *Backend) Servers() ([]*clusterApi.Server, error) {
 			host = s.Host
 			rpcPort = s.RPCPort
 			raftPort = s.RaftPort
-			httpPort = s.HTTPPort
+			httpPort = s.HTTPBindAddr
+			serfAddr = s.SerfBindAddr
 			isLeader = s.IsLeader
 		}
 
 		srv := &clusterApi.Server{
-			ID:       string(server.ID),
-			IP:       ip,
-			Host:     host,
-			RPCPort:  rpcPort,
-			RaftPort: raftPort,
-			HTTPPort: httpPort,
-			IsLeader: isLeader,
-			Online:   ok == true,
+			ID:           string(server.ID),
+			IP:           ip,
+			Host:         host,
+			RPCPort:      rpcPort,
+			RaftPort:     raftPort,
+			HTTPBindAddr: httpPort,
+			SerfBindAddr: serfAddr,
+			IsLeader:     isLeader,
+			Online:       ok == true,
 		}
 		servers = append(servers, srv)
 
 		d.logger.Debug("cluster server info", "id", srv.ID,
 			"host", srv.Host, "ip", srv.IP,
 			"raft-port", srv.RaftPort, "rpc-port", srv.RPCPort,
-			"http-port", srv.HTTPPort, "isLeader", srv.IsLeader)
+			"http-addr", srv.HTTPBindAddr, "serf-addr", srv.SerfBindAddr,
+			"isLeader", srv.IsLeader)
 	}
 
 	return servers, nil

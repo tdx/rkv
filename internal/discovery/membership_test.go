@@ -36,8 +36,8 @@ func TestMembership(t *testing.T) {
 	require.Equal(t, fmt.Sprintf("%d", 2), <-handler.leaves)
 }
 
-func setupMember(t *testing.T, members []*Membership) (
-	[]*Membership, *handler) {
+func setupMember(
+	t *testing.T, members []*Membership) ([]*Membership, *handler) {
 
 	id := len(members)
 	ports := dynaport.Get(1)
@@ -70,7 +70,12 @@ type handler struct {
 	leaves chan string
 }
 
-func (h *handler) Join(id, addr, rpcAddr string, local bool) error {
+// func (h *handler) Join(id, addr, rpcAddr string, local bool) error {
+func (h *handler) Join(id string, tags map[string]string, local bool) error {
+	if local {
+		return nil
+	}
+	addr := tags["raft_addr"]
 	if h.joins != nil {
 		h.joins <- map[string]string{
 			"id":   id,
@@ -80,7 +85,11 @@ func (h *handler) Join(id, addr, rpcAddr string, local bool) error {
 	return nil
 }
 
-func (h *handler) Leave(id, addr string, local bool) error {
+// func (h *handler) Leave(id, addr string, local bool) error {
+func (h *handler) Leave(id string, tags map[string]string, local bool) error {
+	if local {
+		return nil
+	}
 	if h.leaves != nil {
 		h.leaves <- id
 	}
