@@ -77,7 +77,7 @@ func New(
 	id := string(config.Raft.LocalID)
 
 	host, ip, raftPort, rpcPort, err := parseAddrs(
-		config.StreamLayer.Addr().String(),
+		config.RaftAddr,
 		config.RPCAddr,
 	)
 	if err != nil {
