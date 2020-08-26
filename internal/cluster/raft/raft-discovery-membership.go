@@ -1,7 +1,6 @@
 package raft
 
 import (
-	"fmt"
 	"net"
 
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
@@ -21,6 +20,7 @@ var _ discovery.Handler = (*Backend)(nil)
 func (d *Backend) Join(id string, tags map[string]string, local bool) error {
 
 	var (
+		ip       = tags["ip"]
 		rpcAddr  = tags["rpc_addr"]
 		raftAddr = tags["raft_addr"]
 		httpAddr = tags["http_addr"]
@@ -37,7 +37,7 @@ func (d *Backend) Join(id string, tags map[string]string, local bool) error {
 		}
 	}
 
-	host, ip, raftPort, rpcPort, err := parseAddrs(raftAddr, rpcAddr)
+	host, _, raftPort, rpcPort, err := d.parseAddrs(raftAddr, rpcAddr)
 	if err != nil {
 		return err
 	}
@@ -199,7 +199,7 @@ func (d *Backend) checkMembers() {
 	}
 }
 
-func parseAddrs(
+func (d *Backend) parseAddrs(
 	raftAddr, rpcAddr string) (string, string, string, string, error) {
 
 	host, raftPort, err := net.SplitHostPort(raftAddr)
@@ -214,11 +214,8 @@ func parseAddrs(
 	}
 	ip, err := net.LookupHost(host)
 	if err != nil {
-		return "", "", "", "", err
-	}
-	if len(ip) == 0 {
-		return "", "", "", "",
-			fmt.Errorf("where are no ip addresses for hostname '%s'", host)
+		d.logger.Error("LookupHost failed", "host", host, "error", err)
+		ip = []string{""}
 	}
 	_, rpcPort, err := net.SplitHostPort(rpcAddr)
 	if err != nil {

@@ -98,11 +98,9 @@ func (m *Membership) eventHandler() {
 }
 
 func (m *Membership) handleJoin(member serf.Member) {
-	if err := m.handler.Join(
-		member.Name,
-		member.Tags,
-		m.isLocal(member),
-	); err != nil {
+	tags := member.Tags
+	tags["ip"] = member.Addr.String()
+	if err := m.handler.Join(member.Name, tags, m.isLocal(member)); err != nil {
 		m.logger.Error("JOIN",
 			"id", member.Name,
 			"address", member.Tags["raft_addr"],

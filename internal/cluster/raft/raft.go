@@ -83,7 +83,7 @@ func New(
 	//
 	// add self to servers
 	//
-	host, ip, raftPort, rpcPort, err := parseAddrs(
+	host, ip, raftPort, rpcPort, err := d.parseAddrs(
 		config.RaftAddr,
 		config.RPCAddr,
 	)
