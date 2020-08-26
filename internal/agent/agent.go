@@ -147,13 +147,6 @@ func (a *Agent) setupMembership() error {
 
 	discoHandler := a.raftDb.(discovery.Handler)
 
-	if len(a.Config.StartJoinAddrs) == 0 &&
-		a.raftDb.(clusterApi.Cluster).Restarted() {
-		addrs := strings.Split(os.Getenv("JOIN_ADDRS"), ",")
-		a.logger.Info("env join-addrs", "addrs", addrs)
-		a.Config.StartJoinAddrs = addrs
-	}
-
 	a.membership, err = discovery.New(
 		discoHandler,
 		discovery.Config{
