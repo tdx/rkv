@@ -3,6 +3,7 @@ package discovery
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	log "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/serf/serf"
@@ -15,6 +16,7 @@ type Membership struct {
 	handler Handler
 	serf    *serf.Serf
 	events  chan serf.Event
+	persist *persist
 }
 
 // New ...
@@ -36,6 +38,12 @@ func (m *Membership) Join(existing []string) (int, error) {
 }
 
 func (m *Membership) setupSerf() (err error) {
+
+	m.persist, err = newPersist(m.DataDir)
+	if err != nil {
+		return err
+	}
+
 	logger := m.Config.Logger
 	if logger == nil {
 		logger = log.New(&log.LoggerOptions{
@@ -44,6 +52,15 @@ func (m *Membership) setupSerf() (err error) {
 		})
 	}
 	m.logger = logger
+
+	if len(m.StartJoinAddrs) == 0 {
+		if v := m.persist.GetJoins(); v != "" {
+
+			m.StartJoinAddrs = strings.Split(v, ",")
+		}
+	}
+
+	logger.Debug("setup", "join-addrs", m.StartJoinAddrs)
 
 	addr, err := net.ResolveTCPAddr("tcp", m.BindAddr)
 	if err != nil {
@@ -107,19 +124,22 @@ func (m *Membership) handleJoin(member serf.Member) {
 			"error", err,
 		)
 	}
+	if err := m.persistsMembers(); err != nil {
+		m.logger.Error("persist members failed", "error", err)
+	}
 }
 
 func (m *Membership) handleLeave(member serf.Member) {
-	if err := m.handler.Leave(
-		member.Name,
-		member.Tags,
-		m.isLocal(member),
-	); err != nil {
+	err := m.handler.Leave(member.Name, member.Tags, m.isLocal(member))
+	if err != nil {
 		m.logger.Error("LEAVE",
 			"id", member.Name,
 			"address", member.Tags["raft_addr"],
 			"error", err,
 		)
+	}
+	if err = m.persistsMembers(); err != nil {
+		m.logger.Error("persist members failed", "error", err)
 	}
 }
 
@@ -135,4 +155,44 @@ func (m *Membership) Members() []serf.Member {
 // Leave ...
 func (m *Membership) Leave() error {
 	return m.serf.Leave()
+}
+
+func (m *Membership) persistsMembers() error {
+	var (
+		serfAddrs []string
+		localName = m.serf.LocalMember().Name
+	)
+	for _, member := range m.serf.Members() {
+		if localName != member.Name {
+			serfAddr, ok := member.Tags["serf_addr"]
+			if ok {
+				addr, err := normaliseAddr(serfAddr)
+				if err != nil {
+					m.logger.Error("persist Members", "id", member.Name,
+						"serf-addr", serfAddr, "error", err)
+					continue
+				}
+				serfAddrs = append(serfAddrs, addr)
+			}
+		}
+	}
+	if len(serfAddrs) == 0 {
+		return nil
+	}
+
+	return m.persist.SaveJoins(strings.Join(serfAddrs, ","))
+}
+
+func normaliseAddr(addr string) (string, error) {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return addr, err
+	}
+	switch host {
+	case "::":
+		host = "ip6-localhost"
+	case ":":
+		host = "localhost"
+	}
+	return net.JoinHostPort(host, port), nil
 }

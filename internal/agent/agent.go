@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -41,35 +40,35 @@ type Agent struct {
 }
 
 // New returns agent instance
-func New(config *Config) (*Agent, error) {
+func New(cfg *Config) (*Agent, error) {
 
-	logger := config.Logger
+	logger := cfg.Logger
 	if logger == nil {
-		logLevel := hlog.LevelFromString(config.Raft.LogLevel)
+		logLevel := hlog.LevelFromString(cfg.Raft.LogLevel)
 		if logLevel == hlog.NoLevel {
 			logLevel = hlog.Error
 		}
 		logger = hlog.New(&hlog.LoggerOptions{
-			Name:  fmt.Sprintf("agent-%s", config.NodeName),
+			Name:  fmt.Sprintf("agent-%s", cfg.NodeName),
 			Level: logLevel,
 		})
 	}
-	config.Logger = logger
+	cfg.Logger = logger
 
 	hostname, _ := os.Hostname()
-	rpcAddr, _ := config.RPCAddr()
+	rpcAddr, _ := cfg.RPCAddr()
 	logger.Info("os", "hostname", hostname)
-	logger.Info("config", "log-level", config.Raft.LogLevel)
-	logger.Info("config", "node-name", config.NodeName)
-	logger.Info("config", "data-dir", filepath.Dir(config.Backend.DSN()))
-	logger.Info("config", "db", config.Backend.DSN())
-	logger.Info("config", "discovery-join-address", config.StartJoinAddrs)
+	logger.Info("config", "log-level", cfg.Raft.LogLevel)
+	logger.Info("config", "node-name", cfg.NodeName)
+	logger.Info("config", "data-dir", cfg.DataDir)
+	logger.Info("config", "db", cfg.Backend.DSN())
+	logger.Info("config", "discovery-join-address", cfg.StartJoinAddrs)
 	logger.Info("config", "gRPC address", rpcAddr)
-	logger.Info("config", "Raft.Heartbeat timeout", config.Raft.HeartbeatTimeout)
-	logger.Info("config", "Raft.Election timeout", config.Raft.ElectionTimeout)
+	logger.Info("config", "Raft.Heartbeat timeout", cfg.Raft.HeartbeatTimeout)
+	logger.Info("config", "Raft.Election timeout", cfg.Raft.ElectionTimeout)
 
 	a := &Agent{
-		Config:   config,
+		Config:   cfg,
 		logger:   logger,
 		registry: registry.NewApplyRegistrator(),
 	}
@@ -151,6 +150,7 @@ func (a *Agent) setupMembership() error {
 		discoHandler,
 		discovery.Config{
 			Logger:   a.logger.Named("serf"),
+			DataDir:  a.Config.DataDir,
 			NodeName: a.Config.NodeName,
 			BindAddr: a.Config.BindAddr,
 			Tags: map[string]string{

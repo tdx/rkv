@@ -22,7 +22,7 @@ type Server struct {
 type Cluster interface {
 	WaitForLeader(time.Duration) error
 	IsLeader() bool
-	LeaderAddr() string
+	Leader() (host, ip string)
 	Servers() ([]*Server, error)
 	Restarted() bool
 }

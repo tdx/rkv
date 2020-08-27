@@ -8,21 +8,17 @@ import (
 
 // Config to create client
 type Config struct {
-	// Raft config
-	Raft raft.Config
-	// NodeName
+	Raft     raft.Config
 	NodeName string
+	DataDir  string
 	// Membership ip:port used by Serf to discover nodes and create cluster
 	DiscoveryAddr string
 	// DiscoveryJoinAddrs is empty for leader
 	// For followers contains leader address [+running followers addresses]
 	DiscoveryJoinAddrs []string
-	// Raft port
-	RaftPort int
-	// RPC port
-	RPCPort int
-	// HTTPAddr
-	HTTPAddr string
+	RaftPort           int
+	RPCPort            int
+	HTTPAddr           string
 	// LogLevel: error | warn | info | debug | trace
 	LogLevel string
 	// Backend

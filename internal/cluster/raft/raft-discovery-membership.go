@@ -160,8 +160,12 @@ func (d *Backend) checkMembers() {
 	}
 
 	// find members not in cluster
-	var deleted bool
 	raftServers := future.Configuration().Servers
+	if len(raftServers) == 0 {
+		return
+	}
+
+	var deleted bool
 	for _, server := range raftServers {
 		_, ok := d.servers[string(server.ID)]
 		if !ok {
@@ -181,14 +185,20 @@ func (d *Backend) checkMembers() {
 
 	// find members not in raft cluster config and add them as voters
 	for id, serfServer := range d.servers {
+		var found bool
 		for _, raftServer := range raftServers {
 			if id == string(raftServer.ID) {
-				continue
+				found = true
+				break
 			}
 		}
+		if found {
+			continue
+		}
+
 		// add server to raft
-		raftAddr := serfServer.Host + ":" + serfServer.RaftPort
-		d.logger.Info("found serf server not in cluster", "id", id,
+		raftAddr := net.JoinHostPort(serfServer.Host, serfServer.RaftPort)
+		d.logger.Info("found serf server not in cluster", "serf-id", id,
 			"raft-addr", raftAddr)
 		addFuture := d.raft.AddVoter(
 			raft.ServerID(id), raft.ServerAddress(raftAddr), 0, 0)
@@ -203,13 +213,14 @@ func (d *Backend) parseAddrs(
 	raftAddr, rpcAddr string) (string, string, string, string, error) {
 
 	host, raftPort, err := net.SplitHostPort(raftAddr)
+
 	if err != nil {
 		return "", "", "", "", err
 	}
 	if host == "" {
 		host = "localhost"
 	}
-	if host == ":" || host == "[::]" {
+	if host == ":" || host == "::" {
 		host = "ip6-localhost"
 	}
 	ip, err := net.LookupHost(host)

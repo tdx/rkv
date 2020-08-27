@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -224,6 +225,10 @@ func open(dir string) (*bolt.DB, error) {
 
 	for _, file := range files {
 		if file.IsDir() {
+			continue
+		}
+
+		if !strings.HasPrefix(file.Name(), "bolt.db") {
 			continue
 		}
 

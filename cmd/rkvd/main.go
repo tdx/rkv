@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"syscall"
 
 	"github.com/tdx/rkv"
@@ -53,7 +54,7 @@ func setupFlags(cmd *cobra.Command) error {
 	cmd.Flags().String("data-dir", dataDir, "Directory to store DB, log and Raft data.")
 	cmd.Flags().String("db", "bolt", "Database. Awaylable: bolt, map, bitcask.")
 	cmd.Flags().Int("bitcask-max-data-file-size", (1 << 20), "Max data file size for bitcask.")
-	cmd.Flags().String("discovery-addr", "0.0.0.0:8400", "Address to bind Serf on.")
+	cmd.Flags().String("discovery-addr", ":8400", "Address to bind Serf on.")
 	cmd.Flags().StringSlice("discovery-join-addrs", nil, "Serf addresses to join.")
 	cmd.Flags().Int("raft-port", 8401, "Port for Raft connections.")
 	cmd.Flags().String("raft-election-timeout", "1000ms", "Raft election timeout.")
@@ -63,7 +64,7 @@ func setupFlags(cmd *cobra.Command) error {
 	cmd.Flags().String("raft-snapshot-interval", "900s", "Raft snapshot interval.")
 	cmd.Flags().Int("raft-snapshot-threshold", 8192, "Raft snapshot threshold.")
 	cmd.Flags().Int("rpc-port", 8402, "Port for RPC connections.")
-	cmd.Flags().String("http-addr", "0.0.0.0:8403", "Address to bind HTTP on.")
+	cmd.Flags().String("http-addr", ":8403", "Address to bind HTTP on.")
 	cmd.Flags().String("log-level", "info", "Log level.")
 
 	return viper.BindPFlags(cmd.Flags())
@@ -84,16 +85,17 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 	}
 
 	// db
-	dataDir := viper.GetString("data-dir")
+	c.Config.DataDir = viper.GetString("data-dir")
 	dbType := viper.GetString("db")
+	dbDir := filepath.Join(c.Config.DataDir, "db")
 	switch dbType {
 	case "map":
-		c.Config.Backend, err = gmap.New(dataDir)
+		c.Config.Backend, err = gmap.New(dbDir)
 	case "bitcask":
 		max := viper.GetInt("bitcask-max-data-file-size")
-		c.Config.Backend, err = bitcask.New(dataDir, max)
+		c.Config.Backend, err = bitcask.New(dbDir, max)
 	default:
-		c.Config.Backend, err = bolt.New(dataDir)
+		c.Config.Backend, err = bolt.New(dbDir)
 	}
 	if err != nil {
 		return err

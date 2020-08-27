@@ -3,6 +3,7 @@ package route
 import (
 	"context"
 	"fmt"
+	"net"
 	"sync"
 
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
@@ -98,7 +99,7 @@ func (r *Resolver) ResolveNow(resolver.ResolveNowOptions) {
 		if !server.IsLeader {
 			continue
 		}
-		leader = server.Host + ":" + server.RpcPort
+		leader = net.JoinHostPort(server.Host, server.RpcPort)
 		addrs = append(addrs, resolver.Address{
 			Addr: leader,
 			Attributes: attributes.New(

@@ -27,6 +27,7 @@ func NewClient(config *api.Config) (api.Client, error) {
 
 	return agent.New(&agent.Config{
 		Raft:           config.Raft,
+		DataDir:        config.DataDir,
 		Backend:        config.Backend,
 		Logger:         logger,
 		NodeName:       config.NodeName,

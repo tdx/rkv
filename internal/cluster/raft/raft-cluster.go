@@ -35,9 +35,15 @@ func (d *Backend) IsLeader() bool {
 	return d.raft.State() == raft.Leader
 }
 
-// LeaderAddr returns raft leader address
-func (d *Backend) LeaderAddr() string {
-	return string(d.raft.Leader())
+// Leader returns raft leader address
+func (d *Backend) Leader() (string, string) {
+	leaderIP := string(d.raft.Leader())
+	for _, server := range d.servers {
+		if server.IsLeader {
+			return server.Host, leaderIP
+		}
+	}
+	return "", ""
 }
 
 // Servers returns cluster servers

@@ -7,6 +7,7 @@ import (
 // Config ...
 type Config struct {
 	Logger         log.Logger
+	DataDir        string
 	NodeName       string
 	BindAddr       string
 	Tags           map[string]string

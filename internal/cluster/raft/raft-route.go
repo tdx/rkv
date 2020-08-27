@@ -2,6 +2,7 @@ package raft
 
 import (
 	"fmt"
+	"net"
 
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
@@ -63,7 +64,7 @@ func (d *Backend) leaderChanged(leader raft.ServerAddress) {
 		return
 	}
 
-	rpcLeaderAddr := leaderServer.IP + ":" + leaderServer.RPCPort
+	rpcLeaderAddr := net.JoinHostPort(leaderServer.IP, leaderServer.RPCPort)
 
 	if d.rpcLeaderAddr == rpcLeaderAddr {
 		return

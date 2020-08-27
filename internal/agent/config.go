@@ -13,6 +13,7 @@ import (
 
 // Config ...
 type Config struct {
+	DataDir  string
 	Raft     raft.Config
 	Logger   log.Logger
 	BindAddr string // Serf, Raft, RPC address. Serf with port
