@@ -61,6 +61,8 @@ func (d *Backend) Get(
 		if err != nil {
 			st := status.Convert(err)
 			switch st.Code() {
+			case codes.Unavailable:
+				return nil, rkvApi.ErrNodeIsNotALeader
 			case codes.NotFound:
 				return nil, dbApi.ErrNoKey(key)
 			default:
@@ -126,6 +128,11 @@ func (d *Backend) Put(tab, key, val []byte) error {
 				Val: val,
 			})
 		if err != nil {
+			st := status.Convert(err)
+			switch st.Code() {
+			case codes.Unavailable:
+				return rkvApi.ErrNodeIsNotALeader
+			}
 			return err
 		}
 		return nil
@@ -165,6 +172,8 @@ func (d *Backend) Delete(tab, key []byte) error {
 		if err != nil {
 			st := status.Convert(err)
 			switch st.Code() {
+			case codes.Unavailable:
+				return rkvApi.ErrNodeIsNotALeader
 			case codes.NotFound:
 				return dbApi.ErrNoKey(key)
 			default:

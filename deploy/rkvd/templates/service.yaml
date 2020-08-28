@@ -5,17 +5,29 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels: {{- include "rkvd.labels" . | nindent 4 }}
 spec:
-#  clusterIP: None
-  type: LoadBalancer
+  clusterIP: None
+#  type: LoadBalancer
   publishNotReadyAddresses: true
   ports:
-    - name: http
+    - name: serf-tcp
       protocol: "TCP"
-      port: {{ .Values.httpPort }}
-      targetPort: {{ .Values.httpPort }}
+      port: {{ .Values.serfPort }}
+      targetPort: {{ .Values.serfPort }}
+    - name: serf-udp
+      protocol: "UDP"
+      port: {{ .Values.serfPort }}
+      targetPort: {{ .Values.serfPort }}
+    - name: raft
+      protocol: "TCP"
+      port: {{ .Values.raftPort }}
+      targetPort: {{ .Values.raftPort }}
     - name: rpc
       protocol: "TCP"
       port: {{ .Values.rpcPort }}
       targetPort: {{ .Values.rpcPort }}
+    - name: http
+      protocol: "TCP"
+      port: {{ .Values.httpPort }}
+      targetPort: {{ .Values.httpPort }}
   selector:
     {{- include "rkvd.selectorLabels" . | nindent 4 }}

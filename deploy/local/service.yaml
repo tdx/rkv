@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rkvd-ingress
+  namespace: default
+  labels:
+    app.kubernetes.io/name: rkvd
+    app.kubernetes.io/instance: rkvd
+    app.kubernetes.io/version: 0.3.2
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      protocol: "TCP"
+      port: 8413
+      targetPort: 8403
+    - name: rpc
+      protocol: "TCP"
+      port: 8412
+      targetPort: 8402
+  selector:
+    app.kubernetes.io/name: rkvd
+    app.kubernetes.io/instance: rkvd

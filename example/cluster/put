@@ -22,6 +22,7 @@ while [ $# -gt 0 ]; do
 done
 
 curl -X POST \
+        -s -w " %{http_code}" \
 	-H "Content-Type: application/json" \
 	-d '{"tab": "'$tab'","key":"'$key'","val":"'$val'"}' \
         http://$hostname:$port/db/put

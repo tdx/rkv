@@ -6,6 +6,20 @@ import (
 )
 
 //
+// ErrNotALeader error
+//
+type ErrNotALeader struct{}
+
+// GRPCStatus used by go-rpc to construct error answer
+func (e ErrNotALeader) GRPCStatus() *status.Status {
+	return status.New(codes.Unavailable, "node is not a leader")
+}
+
+func (e ErrNotALeader) Error() string {
+	return e.GRPCStatus().Err().Error()
+}
+
+//
 // ErrNoTable error
 //
 type ErrNoTable struct{}

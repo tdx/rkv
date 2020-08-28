@@ -136,6 +136,11 @@ func (s *Server) dbPut(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.db.Put([]byte(tab), keyb, valb); err != nil {
 		s.logger.Error("put", "error", err)
+		switch err {
+		case api.ErrNodeIsNotALeader:
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -196,6 +201,10 @@ func (s *Server) dbGet(w http.ResponseWriter, r *http.Request) {
 		}
 		if dbApi.IsNoKeyError(err) {
 			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if err == api.ErrNodeIsNotALeader {
+			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
 		s.logger.Error("get", "error", err)
@@ -265,6 +274,10 @@ func (s *Server) dbDel(w http.ResponseWriter, r *http.Request) {
 		}
 		if dbApi.IsNoKeyError(err) {
 			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if err == api.ErrNodeIsNotALeader {
+			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
 		s.logger.Error("put", "error", err)

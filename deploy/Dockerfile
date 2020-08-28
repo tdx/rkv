@@ -7,7 +7,7 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.3.2 && \
     https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/\
 ${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
     chmod +x /go/bin/grpc_health_probe
-FROM scratch
+FROM nicolaka/netshoot
 COPY --from=build /go/bin/rkvd /bin/rkvd
 COPY --from=build /go/bin/grpc_health_probe /bin/grpc_health_probe
 COPY example/cluster/put /bin/put

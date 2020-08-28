@@ -11,11 +11,24 @@ spec:
       {{- include "rkvd.selectorLabels" . | nindent 6 }}
   serviceName: {{ include "rkvd.fullname" . }}
   replicas: {{ .Values.replicas }}
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: OrderedReady
   template:
     metadata:
       name: {{ include "rkvd.fullname" . }}
       labels: {{- include "rkvd.labels" . | nindent 8 }}
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: "app"
+                    operator: In
+                    values:
+                    - {{ include "rkvd.fullname" . }}
+              topologyKey: "kubernetes.io/hostname"
       initContainers:
       - name: {{ include "rkvd.fullname" . }}-config-init
         image: busybox

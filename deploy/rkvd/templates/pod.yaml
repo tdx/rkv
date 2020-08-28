@@ -1,0 +1,11 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "rkvd.fullname" . }}-pdb
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "rkvd.labels" . | nindent 4 }}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: {{ include "rkvd.fullname" . }}

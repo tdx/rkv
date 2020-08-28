@@ -60,6 +60,10 @@ func (s *grpcServer) Put(
 	req *rpcApi.StoragePutArgs) (*rpcApi.StoragePutReply, error) {
 
 	if err := s.Db.Put(req.Tab, req.Key, req.Val); err != nil {
+		switch err {
+		case rkvApi.ErrNodeIsNotALeader:
+			return nil, rpcApi.ErrNotALeader{}
+		}
 		return nil, err
 	}
 
@@ -95,6 +99,10 @@ func (s *grpcServer) Delete(
 		case dbApi.ErrNoTable:
 			return nil, rpcApi.ErrNoTable{}
 		default:
+			switch err {
+			case rkvApi.ErrNodeIsNotALeader:
+				return nil, rpcApi.ErrNotALeader{}
+			}
 			return nil, err
 		}
 	}
