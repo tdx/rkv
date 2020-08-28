@@ -18,7 +18,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-curl -v -X POST \
+curl -X POST \
 	-H "Content-Type: application/json" \
 	-d '{"addrs": "'$addrs'"}' \
         http://$hostname:$port/cluster/join

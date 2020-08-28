@@ -20,7 +20,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-curl -v -X POST \
+curl -X POST \
 	-H "Content-Type: application/json" \
 	-d '{"tab":"'$tab'","key":"'$key'"}' \
 	http://$hostname:$port/db/del

@@ -1,0 +1,16 @@
+# Default values for rkvd.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: github.com/tdx/rkvd
+  tag: v0.3.2
+  pullPolicy: IfNotPresent
+serfPort: 8400
+raftPort: 8401
+rpcPort: 8402
+httpPort: 8403
+replicas: 3
+storage: 1Gi
+db: bolt
+log: debug

@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "rkvd.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rkvd.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "rkvd.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "rkvd.fullname" . }}
+  replicas: {{ .Values.replicas }}
+  template:
+    metadata:
+      name: {{ include "rkvd.fullname" . }}
+      labels: {{- include "rkvd.labels" . | nindent 8 }}
+    spec:
+      initContainers:
+      - name: {{ include "rkvd.fullname" . }}-config-init
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command:
+          - /bin/sh
+          - -c
+          - |-
+            ID=$(echo $HOSTNAME | rev | cut -d- -f1 | rev)
+            cat > /var/run/rkvd/config.yaml <<EOD
+            node-name: $ID
+            data-dir: /var/run/rkvd
+            db: {{ .Values.db }}
+            discovery-addr: "$HOSTNAME.rkvd.{{.Release.Namespace}}.svc.cluster.local:{{.Values.serfPort}}"
+            $([ $ID != 0 ] && echo 'discovery-join-addrs: "rkvd-0.rkvd.{{.Release.Namespace}}.svc.cluster.local:{{.Values.serfPort}}"')
+            raft-port: {{.Values.raftPort}}
+            rpc-port: {{.Values.rpcPort}}
+            bootstrap: $([ $ID = 0 ] && echo true || echo false )
+            http-addr: ":{{.Values.httpPort}}"
+            log-level: {{ .Values.log }}
+            EOD
+        volumeMounts:
+        - name: datadir
+          mountPath: /var/run/rkvd
+      containers:
+      - name: {{ include "rkvd.fullname" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: {{ .Values.serfPort }}
+          name: serf
+        - containerPort: {{ .Values.raftPort }}
+          name: raft
+        - containerPort: {{ .Values.rpcPort }}
+          name: rpc
+        - containerPort: {{ .Values.httpPort }}
+          name: http
+        args:
+          - --config-file=/var/run/rkvd/config.yaml
+        env:
+          - name: CLUSTER_ADDRS
+            value: ""
+        readinessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - |
+                /bin/grpc_health_probe -addr=$HOSTNAME:{{ .Values.rpcPort }}
+          initialDelaySeconds: 5
+        livenessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - |
+                /bin/grpc_health_probe -addr=$HOSTNAME:{{ .Values.rpcPort }}
+          initialDelaySeconds: 10
+        volumeMounts:
+        - name: datadir
+          mountPath: /var/run/rkvd
+  volumeClaimTemplates:
+  - metadata:
+      name: datadir
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.storage }}

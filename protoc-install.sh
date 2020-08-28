@@ -17,3 +17,9 @@ sudo chown $USER /usr/local/bin/protoc
 sudo chown -R $USER /usr/local/include/google
 
 sudo ldconfig
+
+go get github.com/gogo/protobuf/protoc-gen-gofast
+go get github.com/gogo/protobuf/proto
+go get github.com/gogo/protobuf/protoc-gen-gogofast
+go get github.com/gogo/protobuf/protoc-gen-gogofaster
+go get github.com/gogo/protobuf/gogoproto

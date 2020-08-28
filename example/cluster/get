@@ -20,4 +20,4 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-curl -v "http://$hostname:$port/db/get?tab=$tab&key=$key"
+curl "http://$hostname:$port/db/get?tab=$tab&key=$key"
