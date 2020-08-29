@@ -15,8 +15,9 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/raft"
-	raftldb "github.com/tidwall/raft-leveldb"
+	"github.com/tdx/raft"
+	raftboltdb "github.com/tdx/raft-boltdb"
+	raftldb "github.com/tdx/raft-leveldb"
 )
 
 const (
@@ -134,9 +135,9 @@ func (d *Backend) setupRaft(dataDir string) error {
 	}
 
 	// Create the backend raft store for logs and stable storage.
-	// store, err := raftboltdb.NewBoltStore(filepath.Join(path, "raft.db"))
-	store, err := raftldb.NewLevelDBStore(
-		filepath.Join(path, "stable"), raftldb.High)
+	store, err := raftboltdb.NewBoltStore(filepath.Join(path, "raft.db"))
+	// store, err := raftldb.NewLevelDBStore(
+	// 	filepath.Join(path, "stable"), raftldb.High)
 	if err != nil {
 		return err
 	}
@@ -155,7 +156,7 @@ func (d *Backend) setupRaft(dataDir string) error {
 		d.logger.Named("snapshot"),
 	)
 
-	maxPool := 1
+	maxPool := 5
 	timeout := 10 * time.Second
 	transport := raft.NewNetworkTransport(
 		d.config.StreamLayer,

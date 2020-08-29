@@ -18,8 +18,8 @@ import (
 	"github.com/tdx/rkv/internal/registry"
 
 	log "github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/raft"
 	"github.com/stretchr/testify/require"
+	"github.com/tdx/raft"
 	"github.com/travisjeffery/go-dynaport"
 )
 
@@ -284,7 +284,7 @@ func run2(t *testing.T, nodeCount int, baseDir string, bkType string) {
 
 		if i == 0 {
 			cfg.Bootstrap = true
-			cfg.Raft.StartAsLeader = true
+			// cfg.Raft.StartAsLeader = true
 		}
 
 		var db dbApi.Backend

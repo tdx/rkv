@@ -5,7 +5,7 @@ import (
 
 	dbApi "github.com/tdx/rkv/db/api"
 
-	"github.com/hashicorp/raft"
+	"github.com/tdx/raft"
 )
 
 // Config to create client
