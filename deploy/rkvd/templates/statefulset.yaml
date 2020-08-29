@@ -49,6 +49,8 @@ spec:
             bootstrap: $([ $ID = 0 ] && echo true || echo false )
             http-addr: ":{{.Values.httpPort}}"
             log-level: {{ .Values.log }}
+            raft-snapshot-interval: {{ .Values.raftSnapshotInterval }}
+            shutdown-delay: {{ .Values.shutdownDelay }}
             EOD
         volumeMounts:
         - name: datadir

@@ -155,7 +155,7 @@ func (d *Backend) setupRaft(dataDir string) error {
 		d.logger.Named("snapshot"),
 	)
 
-	maxPool := 5
+	maxPool := 1
 	timeout := 10 * time.Second
 	transport := raft.NewNetworkTransport(
 		d.config.StreamLayer,

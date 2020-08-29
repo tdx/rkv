@@ -25,5 +25,6 @@ curl -X POST \
         -s -w " %{http_code}" \
 	-H "Content-Type: application/json" \
 	-d '{"tab": "'$tab'","key":"'$key'","val":"'$val'"}' \
+        --connect-timeout 10 --max-time 10 \
         http://$hostname:$port/db/put
 
