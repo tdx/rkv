@@ -53,10 +53,12 @@ func (m *Membership) setupSerf() (err error) {
 	}
 	m.logger = logger
 
-	if len(m.StartJoinAddrs) == 0 {
+	if len(m.StartJoinAddrs) < 2 {
 		if v := m.persist.GetJoins(); v != "" {
-
-			m.StartJoinAddrs = strings.Split(v, ",")
+			joinAddrs := strings.Split(v, ",")
+			if len(joinAddrs) > len(m.StartJoinAddrs) {
+				m.StartJoinAddrs = joinAddrs
+			}
 		}
 	}
 
@@ -191,7 +193,7 @@ func normaliseAddr(addr string) (string, error) {
 	switch host {
 	case "::":
 		host = "ip6-localhost"
-	case ":":
+	case "", ":":
 		host = "localhost"
 	}
 	return net.JoinHostPort(host, port), nil
