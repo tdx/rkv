@@ -28,9 +28,9 @@ func TestClientMap(t *testing.T) {
 	run(t, "map")
 }
 
-func TestClientBitcask(t *testing.T) {
-	run(t, "bitcask")
-}
+// func TestClientBitcask(t *testing.T) {
+// 	run(t, "bitcask")
+// }
 
 func run(t *testing.T, bkType string) {
 	dataDir, err := ioutil.TempDir("", "client-test-*")
