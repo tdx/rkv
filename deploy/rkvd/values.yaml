@@ -4,7 +4,7 @@
 
 image:
   repository: github.com/tdx/rkvd
-  tag: v0.3.3.1
+  tag: v0.3.3.2
   pullPolicy: IfNotPresent
 serfPort: 8400
 raftPort: 8401
@@ -15,4 +15,3 @@ storage: 1Gi
 raftSnapshotInterval: 120s
 db: bolt
 log: trace
-shutdownDelay: 4s

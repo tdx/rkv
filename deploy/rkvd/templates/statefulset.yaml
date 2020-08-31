@@ -50,7 +50,6 @@ spec:
             http-addr: ":{{.Values.httpPort}}"
             log-level: {{ .Values.log }}
             raft-snapshot-interval: {{ .Values.raftSnapshotInterval }}
-            shutdown-delay: {{ .Values.shutdownDelay }}
             EOD
         volumeMounts:
         - name: datadir

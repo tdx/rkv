@@ -44,6 +44,20 @@ func (a *Agent) Logger(subSystem string) *log.Logger {
 	return log.New(out, "", 0)
 }
 
+// ExitCluster stop membership
+func (a *Agent) ExitCluster() error {
+	a.exitClusterLock.Lock()
+	defer a.exitClusterLock.Unlock()
+
+	if a.exitCluster {
+		return nil
+	}
+	a.exitCluster = true
+
+	a.logger.Trace("exit cluster")
+	return a.membership.Leave()
+}
+
 //
 func isLeader(db clusterApi.Backend) bool {
 	return db.(clusterApi.Cluster).IsLeader()

@@ -22,6 +22,7 @@ type Client interface {
 	Delete(tab, key []byte) error
 
 	Logger(subSystem string) *log.Logger
+	ExitCluster() error
 	Shutdown() error
 
 	ApplyRegistrator

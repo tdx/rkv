@@ -1,8 +1,6 @@
 package api
 
 import (
-	"time"
-
 	dbApi "github.com/tdx/rkv/db/api"
 
 	"github.com/tdx/raft"
@@ -25,6 +23,4 @@ type Config struct {
 	LogLevel string
 	// Backend
 	Backend dbApi.Backend
-	// Used in k8s. Delay to allow balancer remove traffice from endpoint
-	ShutdownDelay time.Duration
 }

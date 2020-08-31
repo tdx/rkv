@@ -36,6 +36,9 @@ type Agent struct {
 	shutdown     bool
 	shutdownLock sync.Mutex
 
+	exitCluster     bool
+	exitClusterLock sync.Mutex
+
 	registry rkvApi.ApplyRegistrator
 }
 

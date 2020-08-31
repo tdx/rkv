@@ -7,7 +7,6 @@ import (
 	"path"
 	"path/filepath"
 	"syscall"
-	"time"
 
 	"github.com/tdx/rkv"
 	rkvApi "github.com/tdx/rkv/api"
@@ -67,7 +66,6 @@ func setupFlags(cmd *cobra.Command) error {
 	cmd.Flags().Int("rpc-port", 8402, "Port for RPC connections.")
 	cmd.Flags().String("http-addr", ":8403", "Address to bind HTTP on.")
 	cmd.Flags().String("log-level", "info", "Log level.")
-	cmd.Flags().String("shutdown-delay", "", "Used for k8s balancer to remove traffic from pod")
 
 	return viper.BindPFlags(cmd.Flags())
 }
@@ -119,8 +117,6 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 	c.Config.RPCPort = viper.GetInt("rpc-port")
 	c.Config.HTTPAddr = viper.GetString("http-addr")
 
-	c.Config.ShutdownDelay = viper.GetDuration("shutdown-delay")
-
 	return nil
 }
 
@@ -132,8 +128,6 @@ func (c *cli) run(cmd *cobra.Command, args []string) error {
 	c.logger = client.Logger("main")
 	c.logger.SetPrefix("rkvd ")
 
-	c.logger.Println("config:", "shutdown-delay=", c.Config.ShutdownDelay)
-
 	var (
 		done = make(chan struct{})
 		sigc = make(chan os.Signal, 1)
@@ -142,22 +136,21 @@ func (c *cli) run(cmd *cobra.Command, args []string) error {
 	signal.Notify(sigc, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		for s := range sigc {
-			c.logger.Println("got signal signal:", s.String(),
-				", delay shutdown:", c.Config.ShutdownDelay)
+			c.logger.Println("got signal signal:", s.String())
 
 			if s == syscall.SIGTERM {
+				// allow k8s load balancer remove traffic from pod
+				if err = client.ExitCluster(); err != nil {
+					c.logger.Println("failed to exit cluster", err)
+				}
 				continue
 			}
 
-			// allow k8s load balancer remove traffic from pod
-			if c.Config.ShutdownDelay > 0 {
-				time.Sleep(c.Config.ShutdownDelay)
-			}
 			err = client.Shutdown()
 			if err == nil {
 				c.logger.Println("stopped")
 			} else {
-				c.logger.Println("stopped", "error", err)
+				c.logger.Println("shutdown failed", err)
 			}
 			done <- struct{}{}
 		}
