@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -35,9 +34,6 @@ type Agent struct {
 
 	shutdown     bool
 	shutdownLock sync.Mutex
-
-	exitCluster     bool
-	exitClusterLock sync.Mutex
 
 	registry rkvApi.ApplyRegistrator
 }
@@ -234,50 +230,6 @@ func (a *Agent) setupHTTPServer() error {
 	}()
 
 	config.Logger.Info("server started", "address", a.Config.BindHTTP)
-
-	return nil
-}
-
-// Shutdown ...
-func (a *Agent) Shutdown() error {
-	a.shutdownLock.Lock()
-	defer a.shutdownLock.Unlock()
-
-	if a.shutdown {
-		return nil
-	}
-	a.shutdown = true
-
-	a.logger.Trace("shutdown")
-
-	shutdown := []func() error{
-		func() error {
-			if a.grpcServer == nil {
-				return nil
-			}
-			a.grpcServer.GracefulStop()
-			return nil
-		},
-		func() error {
-			if a.httpServer == nil {
-				return nil
-			}
-			ctx, cancel := context.WithTimeout(
-				context.Background(), 5*time.Second)
-			defer func() {
-				cancel()
-			}()
-			return a.httpServer.Shutdown(ctx)
-		},
-		a.raftDb.Close,
-		a.membership.Leave,
-	}
-
-	for _, fn := range shutdown {
-		if err := fn(); err != nil {
-			return err
-		}
-	}
 
 	return nil
 }

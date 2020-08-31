@@ -1,7 +1,9 @@
 package agent
 
 import (
+	"context"
 	"log"
+	"time"
 
 	"github.com/tdx/rkv/api"
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
@@ -44,18 +46,48 @@ func (a *Agent) Logger(subSystem string) *log.Logger {
 	return log.New(out, "", 0)
 }
 
-// ExitCluster stop membership
-func (a *Agent) ExitCluster() error {
-	a.exitClusterLock.Lock()
-	defer a.exitClusterLock.Unlock()
+// Shutdown ...
+func (a *Agent) Shutdown() error {
+	a.shutdownLock.Lock()
+	defer a.shutdownLock.Unlock()
 
-	if a.exitCluster {
+	if a.shutdown {
 		return nil
 	}
-	a.exitCluster = true
+	a.shutdown = true
 
-	a.logger.Trace("exit cluster")
-	return a.membership.Leave()
+	a.logger.Trace("shutdown")
+
+	shutdown := []func() error{
+		func() error {
+			if a.grpcServer == nil {
+				return nil
+			}
+			a.grpcServer.GracefulStop()
+			return nil
+		},
+		func() error {
+			if a.httpServer == nil {
+				return nil
+			}
+			ctx, cancel := context.WithTimeout(
+				context.Background(), 5*time.Second)
+			defer func() {
+				cancel()
+			}()
+			return a.httpServer.Shutdown(ctx)
+		},
+		a.raftDb.Close,
+		a.membership.Leave,
+	}
+
+	for _, fn := range shutdown {
+		if err := fn(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 //

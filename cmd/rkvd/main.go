@@ -135,25 +135,16 @@ func (c *cli) run(cmd *cobra.Command, args []string) error {
 
 	signal.Notify(sigc, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
-		for s := range sigc {
-			c.logger.Println("got signal signal:", s.String())
+		s := <-sigc
+		c.logger.Println("got signal signal:", s.String())
 
-			if s == syscall.SIGTERM {
-				// allow k8s load balancer remove traffic from pod
-				if err = client.ExitCluster(); err != nil {
-					c.logger.Println("failed to exit cluster", err)
-				}
-				continue
-			}
-
-			err = client.Shutdown()
-			if err == nil {
-				c.logger.Println("stopped")
-			} else {
-				c.logger.Println("shutdown failed", err)
-			}
-			done <- struct{}{}
+		err = client.Shutdown()
+		if err == nil {
+			c.logger.Println("stopped")
+		} else {
+			c.logger.Println("shutdown failed", err)
 		}
+		done <- struct{}{}
 	}()
 
 	<-done

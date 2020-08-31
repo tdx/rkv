@@ -20,11 +20,8 @@ require (
 	github.com/spf13/cobra v0.0.7
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.6.1
-	github.com/syndtr/goleveldb v1.0.0 // indirect
-	github.com/tdx/raft v1.1.5
+	github.com/tdx/raft v1.1.7
 	github.com/tdx/raft-boltdb v0.1.1
-	github.com/tdx/raft-leveldb v0.1.0
-	github.com/tidwall/raft-leveldb v0.0.0-20200212161345-c33715f6fd63
 	github.com/travisjeffery/go-dynaport v1.0.0
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect

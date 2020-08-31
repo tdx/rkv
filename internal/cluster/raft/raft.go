@@ -155,16 +155,13 @@ func (d *Backend) setupRaft(dataDir string) error {
 		d.logger.Named("snapshot"),
 	)
 
-	maxPool := 5
-	timeout := 10 * time.Second
-	transport := raft.NewNetworkTransport(
-		d.config.StreamLayer,
-		maxPool,
-		timeout,
-		d.logger.Named("net").StandardLogger(&log.StandardLoggerOptions{
-			InferLevels: true,
-		}).Writer(),
-	)
+	transport := raft.NewNetworkTransportWithConfig(
+		&raft.NetworkTransportConfig{
+			Logger:  d.logger.Named("net"),
+			Stream:  d.config.StreamLayer,
+			MaxPool: 5,
+			Timeout: 10 * time.Second,
+		})
 
 	config := raft.DefaultConfig()
 	config.LocalID = d.config.Raft.LocalID
