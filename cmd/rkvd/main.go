@@ -141,21 +141,26 @@ func (c *cli) run(cmd *cobra.Command, args []string) error {
 
 	signal.Notify(sigc, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
-		s := <-sigc
-		c.logger.Println("got signal signal:", s.String(),
-			", delay shutdown:", c.Config.ShutdownDelay)
+		for s := range sigc {
+			c.logger.Println("got signal signal:", s.String(),
+				", delay shutdown:", c.Config.ShutdownDelay)
 
-		// allow k8s load balancer remove traffic from pod
-		if c.Config.ShutdownDelay > 0 {
-			time.Sleep(c.Config.ShutdownDelay)
+			if s == syscall.SIGTERM {
+				continue
+			}
+
+			// allow k8s load balancer remove traffic from pod
+			if c.Config.ShutdownDelay > 0 {
+				time.Sleep(c.Config.ShutdownDelay)
+			}
+			err = client.Shutdown()
+			if err == nil {
+				c.logger.Println("stopped")
+			} else {
+				c.logger.Println("stopped", "error", err)
+			}
+			done <- struct{}{}
 		}
-		err = client.Shutdown()
-		if err == nil {
-			c.logger.Println("stopped")
-		} else {
-			c.logger.Println("stopped", "error", err)
-		}
-		done <- struct{}{}
 	}()
 
 	<-done
