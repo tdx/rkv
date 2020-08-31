@@ -146,8 +146,13 @@ func (d *Backend) Leave(id string, tags map[string]string, local bool) error {
 	d.logger.Debug("LEAVE RemoveServer", "id", id)
 
 	removeFuture := d.raft.RemoveServer(raft.ServerID(id), 0, 0)
+	if err := removeFuture.Error(); err != nil {
+		return err
+	}
 
-	return removeFuture.Error()
+	snapFuture := d.raft.Snapshot()
+
+	return snapFuture.Error()
 }
 
 //
