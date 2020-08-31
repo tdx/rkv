@@ -156,6 +156,7 @@ func (m *Membership) Members() []serf.Member {
 
 // Leave ...
 func (m *Membership) Leave() error {
+	m.logger.Trace("stopping")
 	return m.serf.Leave()
 }
 

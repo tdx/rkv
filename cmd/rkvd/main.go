@@ -134,10 +134,12 @@ func (c *cli) run(cmd *cobra.Command, args []string) error {
 
 	c.logger.Println("config:", "shutdown-delay=", c.Config.ShutdownDelay)
 
-	done := make(chan struct{})
-	sigc := make(chan os.Signal, 1)
+	var (
+		done = make(chan struct{})
+		sigc = make(chan os.Signal, 1)
+	)
 
-	signal.Notify(sigc, syscall.SIGTERM)
+	signal.Notify(sigc, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		s := <-sigc
 		c.logger.Println("got signal signal:", s.String(),
@@ -147,10 +149,16 @@ func (c *cli) run(cmd *cobra.Command, args []string) error {
 		if c.Config.ShutdownDelay > 0 {
 			time.Sleep(c.Config.ShutdownDelay)
 		}
+		err = client.Shutdown()
+		if err == nil {
+			c.logger.Println("stopped")
+		} else {
+			c.logger.Println("stopped", "error", err)
+		}
 		done <- struct{}{}
 	}()
 
 	<-done
 
-	return client.Shutdown()
+	return err
 }

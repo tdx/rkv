@@ -245,8 +245,9 @@ func (a *Agent) Shutdown() error {
 	}
 	a.shutdown = true
 
+	a.logger.Trace("shutdown")
+
 	shutdown := []func() error{
-		a.membership.Leave,
 		func() error {
 			if a.grpcServer == nil {
 				return nil
@@ -266,6 +267,7 @@ func (a *Agent) Shutdown() error {
 			return a.httpServer.Shutdown(ctx)
 		},
 		a.raftDb.Close,
+		a.membership.Leave,
 	}
 
 	for _, fn := range shutdown {

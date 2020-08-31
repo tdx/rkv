@@ -17,7 +17,6 @@ import (
 	log "github.com/hashicorp/go-hclog"
 	"github.com/tdx/raft"
 	raftboltdb "github.com/tdx/raft-boltdb"
-	raftldb "github.com/tdx/raft-leveldb"
 )
 
 const (
@@ -234,14 +233,17 @@ func (d *Backend) Restarted() bool {
 
 // Close ...
 func (d *Backend) Close() error {
+	d.logger.Trace("stopping")
 	if err := d.fsm.Close(); err != nil {
 		return err
 	}
 
-	if err := d.stableStore.(*raftldb.LevelDBStore).Close(); err != nil {
+	d.logger.Trace("closing stable store")
+	if err := d.stableStore.(*raftboltdb.BoltStore).Close(); err != nil {
 		return err
 	}
 
+	d.logger.Trace("shutdown")
 	return d.raft.Shutdown().Error()
 }
 

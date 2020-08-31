@@ -29,5 +29,6 @@ func (f *fsm) Batch(commands [][]*dbApi.BatchEntry, ro bool) error {
 
 // Close ...
 func (f *fsm) Close() error {
+	f.logger.Trace("closing db")
 	return f.db.Close()
 }
