@@ -192,7 +192,7 @@ func (s *Server) dbGet(w http.ResponseWriter, r *http.Request) {
 		keyb = []byte(key)
 	}
 
-	valb, err := s.db.Get(api.ReadAny, []byte(tab), keyb)
+	valb, err := s.db.Get(api.ReadLeader, []byte(tab), keyb)
 	if err != nil {
 		if dbApi.IsNoTableError(err) {
 			s.logger.Error("not exists", "tab", tab)
