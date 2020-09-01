@@ -22,7 +22,7 @@ func NewClient(config *api.Config) (api.Client, error) {
 	logger := hlog.New(&hlog.LoggerOptions{
 		Name:            fmt.Sprintf("agent-%s", config.NodeName),
 		Level:           logLevel,
-		IncludeLocation: true,
+		IncludeLocation: config.LogIncludeLocation,
 		Output:          config.LogOutput,
 	})
 	config.Raft.LogLevel = config.LogLevel

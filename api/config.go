@@ -24,7 +24,8 @@ type Config struct {
 	// LogLevel: error | warn | info | debug | trace
 	LogLevel string
 	// default stderr
-	LogOutput io.Writer
+	LogOutput          io.Writer
+	LogIncludeLocation bool
 	// Backend
 	Backend dbApi.Backend
 }

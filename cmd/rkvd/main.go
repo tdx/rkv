@@ -66,8 +66,9 @@ func setupFlags(cmd *cobra.Command) error {
 	cmd.Flags().Int("raft-snapshot-threshold", 8192, "Raft snapshot threshold.")
 	cmd.Flags().Int("rpc-port", 8402, "Port for RPC connections.")
 	cmd.Flags().String("http-addr", ":8403", "Address to bind HTTP on.")
-	cmd.Flags().String("log-level", "info", "Log level.")
 	cmd.Flags().String("log-file", "", "Log to specified file.")
+	cmd.Flags().String("log-level", "info", "Log level.")
+	cmd.Flags().Bool("log-include-locaton", false, "Caller location.")
 
 	return viper.BindPFlags(cmd.Flags())
 }
@@ -104,7 +105,10 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 	}
 
 	if logFile := viper.GetString("log-file"); logFile != "" {
-		c.logFile, err = os.Open(logFile)
+		c.logFile, err = os.OpenFile(
+			logFile,
+			os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+			0755)
 		if err != nil {
 			return err
 		}
@@ -113,6 +117,7 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 
 	c.Config.NodeName = viper.GetString("node-name")
 	c.Config.LogLevel = viper.GetString("log-level")
+	c.Config.LogIncludeLocation = viper.GetBool("log-include-location")
 	c.Config.DiscoveryAddr = viper.GetString("discovery-addr")
 	c.Config.DiscoveryJoinAddrs = viper.GetStringSlice("discovery-join-addrs")
 

@@ -7,6 +7,7 @@
 # --log debug --hostname localhost
 
 log=${log:-info}
+logfile=${logfile:-}
 hostname=${hostname:-}
 
 while [ $# -gt 0 ]; do
@@ -23,6 +24,7 @@ done
 ./rkvd --db map \
        --data-dir /tmp/rkv/1 \
        --log-level $log \
+       --log-file $logfile \
        --discovery-addr "$hostname:8400" \
        --node-name "n1" \
        --raft-port 8401 \
