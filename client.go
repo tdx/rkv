@@ -6,7 +6,7 @@ import (
 	"github.com/tdx/rkv/api"
 	"github.com/tdx/rkv/internal/agent"
 
-	log "github.com/hashicorp/go-hclog"
+	hlog "github.com/hashicorp/go-hclog"
 )
 
 // NewClient creates rkv client
@@ -15,13 +15,15 @@ func NewClient(config *api.Config) (api.Client, error) {
 		return nil, api.ErrNodeNameEmpty
 	}
 
-	logLevel := log.LevelFromString(config.LogLevel)
-	if logLevel == log.NoLevel {
-		logLevel = log.Error
+	logLevel := hlog.LevelFromString(config.LogLevel)
+	if logLevel == hlog.NoLevel {
+		logLevel = hlog.Error
 	}
-	logger := log.New(&log.LoggerOptions{
-		Name:  fmt.Sprintf("agent-%s", config.NodeName),
-		Level: logLevel,
+	logger := hlog.New(&hlog.LoggerOptions{
+		Name:            fmt.Sprintf("agent-%s", config.NodeName),
+		Level:           logLevel,
+		IncludeLocation: true,
+		Output:          config.LogOutput,
 	})
 	config.Raft.LogLevel = config.LogLevel
 

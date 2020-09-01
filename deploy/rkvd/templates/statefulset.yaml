@@ -38,7 +38,6 @@ spec:
           - -c
           - |-
             ID=$(echo $HOSTNAME | rev | cut -d- -f1 | rev)
-            rm -rf /var/run/rkvd/db/raft
             cat > /var/run/rkvd/config.yaml <<EOD
             node-name: $ID
             data-dir: /var/run/rkvd

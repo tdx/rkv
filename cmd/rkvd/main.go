@@ -37,7 +37,8 @@ func main() {
 }
 
 type cli struct {
-	logger *log.Logger
+	logFile *os.File
+	logger  *log.Logger
 	rkvApi.Config
 }
 
@@ -66,6 +67,7 @@ func setupFlags(cmd *cobra.Command) error {
 	cmd.Flags().Int("rpc-port", 8402, "Port for RPC connections.")
 	cmd.Flags().String("http-addr", ":8403", "Address to bind HTTP on.")
 	cmd.Flags().String("log-level", "info", "Log level.")
+	cmd.Flags().String("log-file", "", "Log to specified file.")
 
 	return viper.BindPFlags(cmd.Flags())
 }
@@ -99,6 +101,14 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 	}
 	if err != nil {
 		return err
+	}
+
+	if logFile := viper.GetString("log-file"); logFile != "" {
+		c.logFile, err = os.Open(logFile)
+		if err != nil {
+			return err
+		}
+		c.Config.LogOutput = c.logFile
 	}
 
 	c.Config.NodeName = viper.GetString("node-name")

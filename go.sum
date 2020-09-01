@@ -321,10 +321,10 @@ github.com/subosito/gotenv v1.2.0 h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/tdx/raft v1.1.5 h1:gZEmAoVQRxsljl7mMemZyu8WDBfB1Msuxfcl/VC0z0g=
 github.com/tdx/raft v1.1.5/go.mod h1:Ji1+OiSI60gweD9GoVfbX6mWcMMI6M4YTZhFJOkC+Xc=
-github.com/tdx/raft v1.1.6 h1:6CYhr05X+EVFtkgva0/HN+kFNxcLl1UHRTKlX+i+7F0=
-github.com/tdx/raft v1.1.6/go.mod h1:Ji1+OiSI60gweD9GoVfbX6mWcMMI6M4YTZhFJOkC+Xc=
 github.com/tdx/raft v1.1.7 h1:6O/UsUQx7ck7J/WpgFQ4S1Eu0Yb42E5jGscLdPb9yKY=
 github.com/tdx/raft v1.1.7/go.mod h1:Ji1+OiSI60gweD9GoVfbX6mWcMMI6M4YTZhFJOkC+Xc=
+github.com/tdx/raft v1.1.9 h1:Np9CRFy5It92lJIZKTRywZDOIoW0yQdiZxD0hIHHxm4=
+github.com/tdx/raft v1.1.9/go.mod h1:Ji1+OiSI60gweD9GoVfbX6mWcMMI6M4YTZhFJOkC+Xc=
 github.com/tdx/raft-boltdb v0.1.1 h1:JLsX7X10xvYnHCUt0l+MdgXt+Ies/fRisuOGiJ9ldGc=
 github.com/tdx/raft-boltdb v0.1.1/go.mod h1:vH3MiNz47nbd3G4VEsskSGFiAySB328fNg6dAf6v2EE=
 github.com/tidwall/redcon v1.3.2/go.mod h1:bdYBm4rlcWpst2XMwKVzWDF9CoUxEbUmM7CQrKeOZas=
@@ -434,8 +434,8 @@ golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae h1:/WDfKMnPU+m5M4xB+6x4kaepx
 golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20200812155832-6a926be9bd1d h1:QQrM/CCYEzTs91GZylDCQjGHudbPTxF/1fvXdVh5lMo=
-golang.org/x/sys v0.0.0-20200812155832-6a926be9bd1d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200828194041-157a740278f4 h1:kCCpuwSAoYJPkNc6x0xT9yTtV4oKtARo4RGBQWOfg9E=
+golang.org/x/sys v0.0.0-20200828194041-157a740278f4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=

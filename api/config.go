@@ -1,6 +1,8 @@
 package api
 
 import (
+	"io"
+
 	dbApi "github.com/tdx/rkv/db/api"
 
 	"github.com/tdx/raft"
@@ -21,6 +23,8 @@ type Config struct {
 	HTTPAddr           string
 	// LogLevel: error | warn | info | debug | trace
 	LogLevel string
+	// default stderr
+	LogOutput io.Writer
 	// Backend
 	Backend dbApi.Backend
 }
