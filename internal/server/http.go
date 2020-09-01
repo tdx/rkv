@@ -346,7 +346,7 @@ func (s *Server) clusterLeader(w http.ResponseWriter, r *http.Request) {
 	cluster := s.db.(clusterApi.Cluster)
 	host, ip := cluster.Leader()
 
-	ret := `{"leader":{"host":"` + host + `","ip":"` + ip + `"}`
+	ret := `{"leader":{"host":"` + host + `","ip":"` + ip + `"}}`
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
