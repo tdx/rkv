@@ -77,9 +77,9 @@ func (m *Membership) setupSerf() (err error) {
 	config.Tags = m.Tags
 	config.NodeName = m.Config.NodeName
 
-	config.Logger = m.logger.StandardLogger(&log.StandardLoggerOptions{
+	config.LogOutput = m.logger.StandardLogger(&log.StandardLoggerOptions{
 		InferLevels: true,
-	})
+	}).Writer()
 
 	m.serf, err = serf.Create(config)
 	if err != nil {
@@ -87,9 +87,8 @@ func (m *Membership) setupSerf() (err error) {
 	}
 	go m.eventHandler()
 	if len(m.StartJoinAddrs) > 0 {
-		_, err = m.serf.Join(m.StartJoinAddrs, true)
-		if err != nil {
-			return err
+		if _, err = m.serf.Join(m.StartJoinAddrs, true); err != nil {
+			m.logger.Error("initial join failed", "error", err)
 		}
 	}
 	return nil
