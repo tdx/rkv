@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	raftboltdb "github.com/tdx/raft-boltdb"
 	dbApi "github.com/tdx/rkv/db/api"
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
@@ -16,7 +17,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	log "github.com/hashicorp/go-hclog"
 	"github.com/tdx/raft"
-	raftboltdb "github.com/tdx/raft-boltdb"
+	raftldb "github.com/tdx/raft-leveldb"
 )
 
 const (
@@ -134,9 +135,9 @@ func (d *Backend) setupRaft(dataDir string) error {
 	}
 
 	// Create the backend raft store for logs and stable storage.
-	store, err := raftboltdb.NewBoltStore(filepath.Join(path, "raft.db"))
-	// store, err := raftldb.NewLevelDBStore(
-	// 	filepath.Join(path, "stable"), raftldb.High)
+	// store, err := raftboltdb.NewBoltStore(filepath.Join(path, "raft.db"))
+	store, err := raftldb.NewLevelDBStore(
+		filepath.Join(path, "stable"), raftldb.High)
 	if err != nil {
 		return err
 	}
