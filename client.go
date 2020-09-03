@@ -15,11 +15,11 @@ func NewClient(config *api.Config) (api.Client, error) {
 		return nil, api.ErrNodeNameEmpty
 	}
 
-	logLevel := hlog.LevelFromString(config.LogLevel)
-	if logLevel == hlog.NoLevel {
-		logLevel = hlog.Info
-	}
 	if config.Logger == nil {
+		logLevel := hlog.LevelFromString(config.LogLevel)
+		if logLevel == hlog.NoLevel {
+			logLevel = hlog.Info
+		}
 		config.Logger = hlog.New(&hlog.LoggerOptions{
 			Name:            fmt.Sprintf("rkv-%s", config.NodeName),
 			Level:           logLevel,
