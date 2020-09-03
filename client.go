@@ -17,21 +17,23 @@ func NewClient(config *api.Config) (api.Client, error) {
 
 	logLevel := hlog.LevelFromString(config.LogLevel)
 	if logLevel == hlog.NoLevel {
-		logLevel = hlog.Error
+		logLevel = hlog.Info
 	}
-	logger := hlog.New(&hlog.LoggerOptions{
-		Name:            fmt.Sprintf("agent-%s", config.NodeName),
-		Level:           logLevel,
-		IncludeLocation: config.LogIncludeLocation,
-		Output:          config.LogOutput,
-	})
+	if config.Logger == nil {
+		config.Logger = hlog.New(&hlog.LoggerOptions{
+			Name:            fmt.Sprintf("rkv-%s", config.NodeName),
+			Level:           logLevel,
+			IncludeLocation: config.LogIncludeLocation,
+			Output:          config.LogOutput,
+		})
+	}
 	config.Raft.LogLevel = config.LogLevel
 
 	return agent.New(&agent.Config{
 		Raft:           config.Raft,
 		DataDir:        config.DataDir,
 		Backend:        config.Backend,
-		Logger:         logger,
+		Logger:         config.Logger,
 		NodeName:       config.NodeName,
 		BindAddr:       config.DiscoveryAddr,
 		StartJoinAddrs: config.DiscoveryJoinAddrs,

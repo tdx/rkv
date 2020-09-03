@@ -3,9 +3,9 @@ package api
 import (
 	"io"
 
-	dbApi "github.com/tdx/rkv/db/api"
-
+	hlog "github.com/hashicorp/go-hclog"
 	"github.com/tdx/raft"
+	dbApi "github.com/tdx/rkv/db/api"
 )
 
 // Config to create client
@@ -26,6 +26,7 @@ type Config struct {
 	// default stderr
 	LogOutput          io.Writer
 	LogIncludeLocation bool
+	Logger             hlog.Logger
 	// Backend
 	Backend dbApi.Backend
 }
