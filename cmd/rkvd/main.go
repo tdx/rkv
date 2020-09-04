@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -14,6 +15,7 @@ import (
 	"github.com/tdx/rkv/db/bolt"
 	"github.com/tdx/rkv/db/gmap"
 
+	hlog "github.com/hashicorp/go-hclog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -104,7 +106,12 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if logFile := viper.GetString("log-file"); logFile != "" {
+	//
+	// logger
+	//
+	logFile := viper.GetString("log-file")
+	fmt.Printf("'%s'\n", logFile)
+	if logFile != "" {
 		c.logFile, err = os.OpenFile(
 			logFile,
 			os.O_CREATE|os.O_WRONLY|os.O_APPEND,
@@ -116,8 +123,29 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 	}
 
 	c.Config.NodeName = viper.GetString("node-name")
+	if c.Config.NodeName == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return err
+		}
+		c.Config.NodeName = hostname
+	}
+
 	c.Config.LogLevel = viper.GetString("log-level")
 	c.Config.LogIncludeLocation = viper.GetBool("log-include-location")
+
+	logLevel := hlog.LevelFromString(c.Config.LogLevel)
+	if logLevel == hlog.NoLevel {
+		logLevel = hlog.Info
+	}
+	logger := hlog.New(&hlog.LoggerOptions{
+		Name:            fmt.Sprintf("rkvd-%s", c.Config.NodeName),
+		Level:           logLevel,
+		IncludeLocation: c.Config.LogIncludeLocation,
+		Output:          c.Config.LogOutput,
+	})
+	c.Config.Logger = logger
+
 	c.Config.DiscoveryAddr = viper.GetString("discovery-addr")
 	c.Config.DiscoveryJoinAddrs = viper.GetStringSlice("discovery-join-addrs")
 

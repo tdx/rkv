@@ -6,6 +6,7 @@
 
 joins=${joins:-127.0.0.1:8400,127.0.0.1:8500}
 log=${log:-info}
+logfile=${logfile:-}
 hostname=${hostname:-}
 
 while [ $# -gt 0 ]; do
@@ -21,6 +22,7 @@ done
 ./rkvd --db map \
        --data-dir /tmp/rkv/3 \
        --log-level $log \
+       --log-file "$logfile" \
        --discovery-addr "$hostname:8600" \
        --discovery-join-addrs $joins \
        --node-name "n3" \

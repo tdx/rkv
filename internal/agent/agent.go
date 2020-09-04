@@ -45,7 +45,7 @@ func New(cfg *Config) (*Agent, error) {
 	if logger == nil {
 		logLevel := hlog.LevelFromString(cfg.Raft.LogLevel)
 		if logLevel == hlog.NoLevel {
-			logLevel = hlog.Error
+			logLevel = hlog.Info
 		}
 		logger = hlog.New(&hlog.LoggerOptions{
 			Name:  fmt.Sprintf("agent-%s", cfg.NodeName),
