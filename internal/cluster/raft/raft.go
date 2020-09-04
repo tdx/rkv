@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	raftboltdb "github.com/tdx/raft-boltdb"
 	dbApi "github.com/tdx/rkv/db/api"
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
@@ -237,7 +236,7 @@ func (d *Backend) Close() error {
 	}
 
 	d.logger.Trace("closing stable store")
-	if err := d.stableStore.(*raftboltdb.BoltStore).Close(); err != nil {
+	if err := d.stableStore.(*raftldb.LevelDBStore).Close(); err != nil {
 		return err
 	}
 
