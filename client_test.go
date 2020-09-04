@@ -114,7 +114,7 @@ func run(t *testing.T, bkType string) {
 		return count, nil
 	}
 
-	err = client.RegisterApply("count", fnCount, true)
+	err = client.RegisterApplyRead("count", fnCount)
 	require.NoError(t, err)
 
 	n, err := client.Apply(rkvApi.ReadCluster, "count", tab)
@@ -163,7 +163,7 @@ func run(t *testing.T, bkType string) {
 		return val, err
 	}
 
-	err = client.RegisterApply("insert", fn, false)
+	err = client.RegisterApplyWrite("insert", fn)
 	require.NoError(t, err)
 
 	var (

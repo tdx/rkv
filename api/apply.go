@@ -14,7 +14,8 @@ var (
 
 // ApplyRegistrator is an interface to reg/unreg function to work with db
 type ApplyRegistrator interface {
-	RegisterApply(name string, fn dbApi.ApplyFunc, readOnly bool) error
+	RegisterApplyWrite(name string, fn dbApi.ApplyFunc) error
+	RegisterApplyRead(name string, fn dbApi.ApplyFunc) error
 	UnRegisterApply(name string) error
 	GetApplyFunc(name string) (dbApi.ApplyFunc, bool, error)
 }

@@ -7,9 +7,14 @@ import (
 
 var _ rkvApi.ApplyRegistrator = (*Agent)(nil)
 
-// RegisterApply ...
-func (a *Agent) RegisterApply(name string, fn dbApi.ApplyFunc, ro bool) error {
-	return a.registry.RegisterApply(name, fn, ro)
+// RegisterApplyRead ...
+func (a *Agent) RegisterApplyRead(name string, fn dbApi.ApplyFunc) error {
+	return a.registry.RegisterApplyRead(name, fn)
+}
+
+// RegisterApplyWrite ...
+func (a *Agent) RegisterApplyWrite(name string, fn dbApi.ApplyFunc) error {
+	return a.registry.RegisterApplyWrite(name, fn)
 }
 
 // UnRegisterApply ...

@@ -9,6 +9,8 @@ port=${port:-8403}
 key=${key:-aabbcc}
 tab=${tab:-test}
 hostname=${hostname:-`hostname`}
+opts=${opts:-}
+hex=${hex:-false}
 
 while [ $# -gt 0 ]; do
 
@@ -20,4 +22,4 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-curl "http://$hostname:$port/db/get?tab=$tab&key=$key"
+curl "$opts" "http://$hostname:$port/db/get?tab=$tab&key=$key&hex=$hex"

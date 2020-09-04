@@ -489,7 +489,7 @@ func TestRaftApply(t *testing.T) {
 		}
 		require.NoError(t, err)
 
-		err = config.ApplyRegistrator.RegisterApply("countTab", fnCount, true)
+		err = config.ApplyRegistrator.RegisterApplyRead("countTab", fnCount)
 		require.NoError(t, err)
 
 		nodes = append(nodes, node)

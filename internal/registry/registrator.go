@@ -26,8 +26,17 @@ func NewApplyRegistrator() rkvApi.ApplyRegistrator {
 	}
 }
 
-// RegisterApply ...
-func (r *reg) RegisterApply(name string, fn dbApi.ApplyFunc, ro bool) error {
+// RegisterApplyRead ...
+func (r *reg) RegisterApplyRead(name string, fn dbApi.ApplyFunc) error {
+	return r.registerApply(name, fn, true)
+}
+
+// RegisterApplyWrite ...
+func (r *reg) RegisterApplyWrite(name string, fn dbApi.ApplyFunc) error {
+	return r.registerApply(name, fn, false)
+}
+
+func (r *reg) registerApply(name string, fn dbApi.ApplyFunc, ro bool) error {
 	r.muf.RLock()
 	_, ok := r.funcs[name]
 	r.muf.RUnlock()
