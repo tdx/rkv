@@ -43,21 +43,37 @@ func New(cfg *Config) (*Agent, error) {
 
 	logger := cfg.Logger
 	if logger == nil {
-		logLevel := hlog.LevelFromString(cfg.Raft.LogLevel)
+		logLevel := hlog.LevelFromString(cfg.LogLevel)
 		if logLevel == hlog.NoLevel {
 			logLevel = hlog.Info
 		}
-		logger = hlog.New(&hlog.LoggerOptions{
-			Name:  fmt.Sprintf("agent-%s", cfg.NodeName),
-			Level: logLevel,
-		})
+		logFormat := cfg.LogTimeFormat
+		if logFormat == "" {
+			logFormat = rkvApi.DefaultTimeFormat
+		}
+		logOpts := &hlog.LoggerOptions{
+			Name:            fmt.Sprintf("rkv-%s", cfg.NodeName),
+			Level:           logLevel,
+			IncludeLocation: cfg.LogIncludeLocation,
+			Output:          cfg.LogOutput,
+			TimeFormat:      logFormat,
+		}
+		if logLevel > hlog.Debug {
+			// to skip serf and memberlist debug logs
+			logOpts.Exclude = func(
+				level hlog.Level, msg string, args ...interface{}) bool {
+
+				return strings.Index(msg, "[DEBUG]") > -1
+			}
+		}
+		logger = hlog.New(logOpts)
 	}
 	cfg.Logger = logger
 
 	hostname, _ := os.Hostname()
 	rpcAddr, _ := cfg.RPCAddr()
 	logger.Info("os", "hostname", hostname)
-	logger.Info("config", "log-level", cfg.Raft.LogLevel)
+	logger.Info("config", "log-level", cfg.LogLevel)
 	logger.Info("config", "node-name", cfg.NodeName)
 	logger.Info("config", "data-dir", cfg.DataDir)
 	logger.Info("config", "db", cfg.Backend.DSN())
@@ -115,6 +131,7 @@ func (a *Agent) setupRaft() error {
 
 	config := &rbk.Config{}
 	config.Raft = a.Config.Raft
+	config.Raft.LogLevel = a.Config.LogLevel
 	config.Raft.Logger = a.logger.Named("raft")
 	config.Raft.LocalID = config.ServerID(a.Config.NodeName)
 	config.RPCAddr = rpcAddr

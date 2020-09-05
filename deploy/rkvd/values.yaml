@@ -14,4 +14,4 @@ replicas: 3
 storage: 1Gi
 raftSnapshotInterval: 120s
 db: bolt
-log: trace
+log: info

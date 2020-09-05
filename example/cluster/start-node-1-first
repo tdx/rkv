@@ -8,6 +8,7 @@
 
 log=${log:-info}
 logfile=${logfile:-}
+logtimeformat=${logtimeformat:-}
 hostname=${hostname:-}
 
 while [ $# -gt 0 ]; do
@@ -25,6 +26,7 @@ done
        --data-dir /tmp/rkv/1 \
        --log-level "$log" \
        --log-file "$logfile" \
+       --log-time-format "$logtimeformat" \
        --discovery-addr "$hostname:8400" \
        --node-name "n1" \
        --raft-port 8401 \

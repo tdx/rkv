@@ -7,6 +7,7 @@
 joins=${joins:-127.0.0.1:8500,127.0.0.1:8600}
 log=${log:-info}
 logfile=${logfile:-}
+logtimeformat=${logtimeformat:-}
 hostname=${hostname:-}
 
 while [ $# -gt 0 ]; do
@@ -23,6 +24,7 @@ done
        --data-dir /tmp/rkv/1 \
        --log-level "$log" \
        --log-file "$logfile" \
+       --log-time-format "$logtimeformat" \
        --discovery-addr "$hostname:8400" \
        --discovery-join-addrs $joins \
        --node-name "n1" \

@@ -7,9 +7,11 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/tdx/rkv"
+	"github.com/tdx/rkv/api"
 	rkvApi "github.com/tdx/rkv/api"
 	"github.com/tdx/rkv/db/bitcask"
 	"github.com/tdx/rkv/db/bolt"
@@ -71,6 +73,7 @@ func setupFlags(cmd *cobra.Command) error {
 	cmd.Flags().String("log-file", "", "Log to specified file.")
 	cmd.Flags().String("log-level", "info", "Log level.")
 	cmd.Flags().Bool("log-include-locaton", false, "Caller location.")
+	cmd.Flags().String("log-time-format", "", "Log time format.")
 
 	return viper.BindPFlags(cmd.Flags())
 }
@@ -121,6 +124,8 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 		}
 		c.Config.LogOutput = c.logFile
 	}
+	c.Config.LogLevel = viper.GetString("log-level")
+	c.Config.LogIncludeLocation = viper.GetBool("log-include-location")
 
 	c.Config.NodeName = viper.GetString("node-name")
 	if c.Config.NodeName == "" {
@@ -131,19 +136,31 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 		c.Config.NodeName = hostname
 	}
 
-	c.Config.LogLevel = viper.GetString("log-level")
-	c.Config.LogIncludeLocation = viper.GetBool("log-include-location")
-
 	logLevel := hlog.LevelFromString(c.Config.LogLevel)
 	if logLevel == hlog.NoLevel {
 		logLevel = hlog.Info
 	}
-	logger := hlog.New(&hlog.LoggerOptions{
+
+	logTimeFormat := viper.GetString("log-time-format")
+	if logTimeFormat == "" {
+		logTimeFormat = api.DefaultTimeFormat
+	}
+	logOpts := &hlog.LoggerOptions{
 		Name:            fmt.Sprintf("rkvd-%s", c.Config.NodeName),
 		Level:           logLevel,
 		IncludeLocation: c.Config.LogIncludeLocation,
 		Output:          c.Config.LogOutput,
-	})
+		TimeFormat:      logTimeFormat,
+	}
+	if logLevel > hlog.Debug {
+		// to skip serf and memberlist debug logs
+		logOpts.Exclude = func(
+			level hlog.Level, msg string, args ...interface{}) bool {
+
+			return strings.Index(msg, "[DEBUG]") > -1
+		}
+	}
+	logger := hlog.New(logOpts)
 	c.Config.Logger = logger
 
 	c.Config.DiscoveryAddr = viper.GetString("discovery-addr")

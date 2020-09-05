@@ -12,7 +12,6 @@ import (
 // Membership ...
 type Membership struct {
 	Config
-	logger  log.Logger
 	handler Handler
 	serf    *serf.Serf
 	events  chan serf.Event
@@ -51,7 +50,7 @@ func (m *Membership) setupSerf() (err error) {
 			Level: log.Debug,
 		})
 	}
-	m.logger = logger
+	m.Config.Logger = logger
 
 	if len(m.StartJoinAddrs) < 2 {
 		if v := m.persist.GetJoins(); v != "" {
@@ -77,9 +76,10 @@ func (m *Membership) setupSerf() (err error) {
 	config.Tags = m.Tags
 	config.NodeName = m.Config.NodeName
 
-	config.LogOutput = m.logger.StandardLogger(&log.StandardLoggerOptions{
+	config.LogOutput = logger.StandardLogger(&log.StandardLoggerOptions{
 		InferLevels: true,
 	}).Writer()
+	config.MemberlistConfig.LogOutput = config.LogOutput
 
 	m.serf, err = serf.Create(config)
 	if err != nil {
@@ -88,7 +88,7 @@ func (m *Membership) setupSerf() (err error) {
 	go m.eventHandler()
 	if len(m.StartJoinAddrs) > 0 {
 		if _, err = m.serf.Join(m.StartJoinAddrs, true); err != nil {
-			m.logger.Error("initial join failed", "error", err)
+			logger.Error("initial join failed", "error", err)
 		}
 	}
 	return nil
@@ -119,28 +119,28 @@ func (m *Membership) handleJoin(member serf.Member) {
 	tags := member.Tags
 	tags["ip"] = member.Addr.String()
 	if err := m.handler.Join(member.Name, tags, m.isLocal(member)); err != nil {
-		m.logger.Error("JOIN",
+		m.Config.Logger.Error("JOIN",
 			"id", member.Name,
 			"address", member.Tags["raft_addr"],
 			"error", err,
 		)
 	}
 	if err := m.persistsMembers(); err != nil {
-		m.logger.Error("persist members failed", "error", err)
+		m.Config.Logger.Error("persist members failed", "error", err)
 	}
 }
 
 func (m *Membership) handleLeave(member serf.Member) {
 	err := m.handler.Leave(member.Name, member.Tags, m.isLocal(member))
 	if err != nil {
-		m.logger.Error("LEAVE",
+		m.Config.Logger.Error("LEAVE",
 			"id", member.Name,
 			"address", member.Tags["raft_addr"],
 			"error", err,
 		)
 	}
 	if err = m.persistsMembers(); err != nil {
-		m.logger.Error("persist members failed", "error", err)
+		m.Config.Logger.Error("persist members failed", "error", err)
 	}
 }
 
@@ -155,7 +155,7 @@ func (m *Membership) Members() []serf.Member {
 
 // Leave ...
 func (m *Membership) Leave() error {
-	m.logger.Trace("stopping")
+	m.Config.Logger.Trace("stopping")
 	return m.serf.Leave()
 }
 
@@ -170,7 +170,7 @@ func (m *Membership) persistsMembers() error {
 			if ok {
 				addr, err := normaliseAddr(serfAddr)
 				if err != nil {
-					m.logger.Error("persist Members", "id", member.Name,
+					m.Config.Logger.Error("persist Members", "id", member.Name,
 						"serf-addr", serfAddr, "error", err)
 					continue
 				}
@@ -197,4 +197,18 @@ func normaliseAddr(addr string) (string, error) {
 		host = "localhost"
 	}
 	return net.JoinHostPort(host, port), nil
+}
+
+func (m *Membership) logLevel() log.Level {
+	if m.Config.Logger.IsTrace() {
+		return log.Trace
+	} else if m.Config.Logger.IsDebug() {
+		return log.Debug
+	} else if m.Config.Logger.IsInfo() {
+		return log.Info
+	} else if m.Config.Logger.IsWarn() {
+		return log.Warn
+	} else {
+		return log.Error
+	}
 }

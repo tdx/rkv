@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+	"io"
 	"net"
 
 	rkvApi "github.com/tdx/rkv/api"
@@ -15,7 +16,6 @@ import (
 type Config struct {
 	DataDir  string
 	Raft     raft.Config
-	Logger   log.Logger
 	BindAddr string // Serf, Raft, RPC address. Serf with port
 	RPCPort  int    // rpc API server
 	RaftPort int
@@ -27,6 +27,15 @@ type Config struct {
 	StartJoinAddrs []string
 	Bootstrap      bool
 	RoutingPolicy  rkvApi.RoutingPolicy
+	// Log oprtions: passed configured logger
+	Logger log.Logger
+	// Or configure options
+	// LogLevel: error | warn | info | debug | trace
+	LogLevel string
+	// LogOutput default - stderr
+	LogOutput          io.Writer
+	LogIncludeLocation bool
+	LogTimeFormat      string
 }
 
 // RPCAddr returns host:port

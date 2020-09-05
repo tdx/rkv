@@ -7,6 +7,7 @@
 joins=${joins:-127.0.0.1:8400}
 log=${log:-info}
 logfile=${logfile:-}
+logtimeformat=${logtimeformat:-}
 hostname=${hostname:-}
 
 while [ $# -gt 0 ]; do
@@ -21,10 +22,11 @@ done
 
 ./rkvd --db map \
        --data-dir /tmp/rkv/2 \
-       --log-level $log \
+       --log-level "$log" \
        --log-file "$logfile" \
+       --log-time-format "$logtimeformat" \
        --discovery-addr "$hostname:8500" \
-       --discovery-join-addrs $joins \
+       --discovery-join-addrs "$joins" \
        --node-name "n2" \
        --raft-port 8501 \
        --rpc-port 8502 \
