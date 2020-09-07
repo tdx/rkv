@@ -4,7 +4,7 @@ import (
 	"io"
 
 	hlog "github.com/hashicorp/go-hclog"
-	"github.com/tdx/raft"
+	"github.com/hashicorp/raft"
 	dbApi "github.com/tdx/rkv/db/api"
 )
 

@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/tdx/raft"
+	"github.com/hashicorp/raft"
 )
 
 var _ raft.StreamLayer = (*StreamLayer)(nil)

@@ -15,8 +15,8 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/hashicorp/go-hclog"
-	"github.com/tdx/raft"
-	raftldb "github.com/tdx/raft-leveldb"
+	"github.com/hashicorp/raft"
+	raftldb "github.com/tidwall/raft-leveldb"
 )
 
 const (

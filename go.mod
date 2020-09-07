@@ -12,6 +12,7 @@ require (
 	github.com/hashicorp/go-msgpack v1.1.5 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/hashicorp/raft v1.1.2
 	github.com/hashicorp/serf v0.9.4
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/miekg/dns v1.1.31 // indirect
@@ -20,8 +21,8 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
-	github.com/tdx/raft v1.2.0
-	github.com/tdx/raft-leveldb v0.1.0
+	github.com/syndtr/goleveldb v1.0.0 // indirect
+	github.com/tidwall/raft-leveldb v0.1.0
 	github.com/travisjeffery/go-dynaport v1.0.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
 	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect

@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/tdx/raft"
+	"github.com/hashicorp/raft"
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 )
 

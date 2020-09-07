@@ -3,7 +3,7 @@ package raft
 import (
 	rkvApi "github.com/tdx/rkv/api"
 
-	"github.com/tdx/raft"
+	"github.com/hashicorp/raft"
 )
 
 // Config for distributed Db

@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tdx/raft"
+	"github.com/hashicorp/raft"
 	dbApi "github.com/tdx/rkv/db/api"
 	"github.com/tdx/rkv/db/bolt"
 	"github.com/tdx/rkv/db/gmap"

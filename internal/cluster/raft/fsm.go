@@ -10,7 +10,7 @@ import (
 	rpcRaft "github.com/tdx/rkv/internal/rpc/raft"
 
 	log "github.com/hashicorp/go-hclog"
-	"github.com/tdx/raft"
+	"github.com/hashicorp/raft"
 )
 
 var _ raft.FSM = (*fsm)(nil)

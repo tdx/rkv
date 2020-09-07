@@ -4,7 +4,7 @@ import (
 	dbApi "github.com/tdx/rkv/db/api"
 
 	log "github.com/hashicorp/go-hclog"
-	"github.com/tdx/raft"
+	"github.com/hashicorp/raft"
 )
 
 var _ raft.FSMSnapshot = (*snapshot)(nil)

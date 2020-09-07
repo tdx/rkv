@@ -6,7 +6,7 @@ import (
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 	"github.com/tdx/rkv/internal/discovery"
 
-	"github.com/tdx/raft"
+	"github.com/hashicorp/raft"
 )
 
 //

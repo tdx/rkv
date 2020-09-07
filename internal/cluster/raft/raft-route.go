@@ -7,7 +7,7 @@ import (
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 
-	"github.com/tdx/raft"
+	"github.com/hashicorp/raft"
 	"google.golang.org/grpc"
 )
 

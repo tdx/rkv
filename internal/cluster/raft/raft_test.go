@@ -19,7 +19,7 @@ import (
 
 	log "github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/require"
-	"github.com/tdx/raft"
+	"github.com/hashicorp/raft"
 	"github.com/travisjeffery/go-dynaport"
 )
 
