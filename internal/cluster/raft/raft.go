@@ -10,8 +10,6 @@ import (
 
 	dbApi "github.com/tdx/rkv/db/api"
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
-	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
-	"google.golang.org/grpc"
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/hashicorp/go-hclog"
@@ -38,11 +36,9 @@ type Backend struct {
 	dataDir     string
 	restarted   bool
 
-	observationCh  chan raft.Observation
-	servers        map[string]*clusterApi.Server
-	rpcLeaderAddr  string
-	grpcLeaderConn *grpc.ClientConn
-	leaderConn     rpcApi.StorageClient
+	observationCh chan raft.Observation
+	servers       map[string]*clusterApi.Server
+	leader        *leader
 }
 
 // New ...
@@ -72,6 +68,7 @@ func New(
 		logger:  logger,
 		config:  config,
 		servers: make(map[string]*clusterApi.Server),
+		leader:  newLeader(logger),
 		fsm: &fsm{
 			id:     string(config.Raft.LocalID),
 			logger: logger.Named("fsm"),

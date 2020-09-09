@@ -5,7 +5,6 @@ import (
 	"net"
 
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
-	rpcApi "github.com/tdx/rkv/internal/rpc/v1"
 
 	"github.com/hashicorp/raft"
 	"google.golang.org/grpc"
@@ -27,7 +26,8 @@ func (d *Backend) leaderChanged(leader raft.ServerAddress) {
 	leaderAddr := d.raft.Leader()
 
 	d.logger.Info("leaderChanged", "event-leader-addr", leader,
-		"raft-leader-addr", leaderAddr, "cur-rpc-leader-addr", d.rpcLeaderAddr)
+		"raft-leader-addr", leaderAddr,
+		"cur-rpc-leader-addr", d.leader.RPCLeaderAddr())
 
 	var leaderServer *clusterApi.Server
 	for _, server := range d.servers {
@@ -66,7 +66,7 @@ func (d *Backend) leaderChanged(leader raft.ServerAddress) {
 
 	rpcLeaderAddr := net.JoinHostPort(leaderServer.IP, leaderServer.RPCPort)
 
-	if d.rpcLeaderAddr == rpcLeaderAddr {
+	if d.leader.RPCLeaderAddr() == rpcLeaderAddr {
 		return
 	}
 
@@ -84,26 +84,16 @@ func (d *Backend) leaderChanged(leader raft.ServerAddress) {
 		clientOpts...,
 	)
 	if err != nil {
-		d.logger.Error("leaderChanged",
+		d.logger.Error("leaderChanged: failed to setup route to leader",
 			"event-leader", leader, "raft-leader-addr", leaderAddr,
 			"rpc-leader-addr", rpcLeaderAddr,
-			"grpc-leader-conn", err)
+			"error", err)
 		return
 	}
 
-	d.rpcLeaderAddr = rpcLeaderAddr
-	d.grpcLeaderConn = conn
-	d.leaderConn = rpcApi.NewStorageClient(conn)
+	d.leader.setLeader(rpcLeaderAddr, conn)
 }
 
 func (d *Backend) closeLeaderCon() {
-	// close previouse connection to leader
-	if d.grpcLeaderConn != nil {
-		d.logger.Debug("closeLeaderCon", "rpc-leader-addr", d.rpcLeaderAddr)
-		d.grpcLeaderConn.Close()
-		d.grpcLeaderConn = nil
-		d.leaderConn = nil
-		d.rpcLeaderAddr = ""
-	}
-
+	d.leader.closeLeader()
 }

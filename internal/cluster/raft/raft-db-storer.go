@@ -36,7 +36,8 @@ func (d *Backend) Get(
 			return d.fsm.Get(tab, key)
 		}
 
-		if d.leaderConn == nil {
+		leaderConn := d.leader.getLeader()
+		if leaderConn == nil {
 			return nil, rkvApi.ErrNodeIsNotALeader
 		}
 
@@ -44,7 +45,8 @@ func (d *Backend) Get(
 
 	case rkvApi.ReadCluster:
 		if !d.IsLeader() {
-			if d.leaderConn == nil {
+			leaderConn := d.leader.getLeader()
+			if leaderConn == nil {
 				return nil, rkvApi.ErrNodeIsNotALeader
 			}
 			doLeaderRPC = true
@@ -52,7 +54,8 @@ func (d *Backend) Get(
 	}
 
 	if doLeaderRPC {
-		resp, err := d.leaderConn.Get(
+		leaderConn := d.leader.getLeader()
+		resp, err := leaderConn.Get(
 			context.Background(),
 			&rpcApi.StorageGetArgs{
 				Tab: tab,
@@ -115,12 +118,13 @@ func (d *Backend) Get(
 func (d *Backend) Put(tab, key, val []byte) error {
 
 	if !d.IsLeader() {
-		if d.leaderConn == nil {
+		leaderConn := d.leader.getLeader()
+		if leaderConn == nil {
 			return rkvApi.ErrNodeIsNotALeader
 		}
 
 		// do leader RPC
-		_, err := d.leaderConn.Put(
+		_, err := leaderConn.Put(
 			context.Background(),
 			&rpcApi.StoragePutArgs{
 				Tab: tab,
@@ -158,12 +162,13 @@ func (d *Backend) Put(tab, key, val []byte) error {
 func (d *Backend) Delete(tab, key []byte) error {
 
 	if !d.IsLeader() {
-		if d.leaderConn == nil {
+		leaderConn := d.leader.getLeader()
+		if leaderConn == nil {
 			return rkvApi.ErrNodeIsNotALeader
 		}
 
 		// do leader RPC
-		_, err := d.leaderConn.Delete(
+		_, err := leaderConn.Delete(
 			context.Background(),
 			&rpcApi.StorageDeleteArgs{
 				Tab: tab,
