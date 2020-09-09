@@ -18,7 +18,7 @@ func TestApply(t *testing.T) {
 	dbFn, ok := db.(dbApi.Applier)
 	require.True(t, ok)
 
-	count, err := dbFn.Apply(fnCount, nil, true)
+	count, err := dbFn.ApplyRead(fnCount, nil)
 	require.NoError(t, err)
 
 	n, ok := count.(int)
@@ -34,7 +34,7 @@ func TestApply(t *testing.T) {
 	err = db.Put(tab, key, val)
 	require.NoError(t, err)
 
-	count, err = dbFn.Apply(fnCount, nil, true)
+	count, err = dbFn.ApplyRead(fnCount, nil)
 	require.NoError(t, err)
 
 	n, ok = count.(int)
@@ -42,7 +42,7 @@ func TestApply(t *testing.T) {
 	require.Equal(t, 1, n)
 }
 
-func fnCount(dbCtx interface{}, args []byte) (interface{}, error) {
+func fnCount(dbCtx interface{}, args ...[]byte) (interface{}, error) {
 	m, ok := dbCtx.(map[string]map[string][]byte)
 	if !ok {
 		return nil, fmt.Errorf("invalid dbCtx: %T %T", dbCtx, m)

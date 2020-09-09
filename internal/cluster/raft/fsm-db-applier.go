@@ -6,7 +6,7 @@ import (
 	dbApi "github.com/tdx/rkv/db/api"
 )
 
-func (f *fsm) applyFunc(name, args []byte) interface{} {
+func (f *fsm) applyFunc(name []byte, args ...[]byte) interface{} {
 
 	dbApp, ok := f.db.(dbApi.Applier)
 	if !ok {
@@ -18,7 +18,12 @@ func (f *fsm) applyFunc(name, args []byte) interface{} {
 		return err
 	}
 
-	val, err := dbApp.Apply(fn, args, ro)
+	var val interface{}
+	if ro {
+		val, err = dbApp.ApplyRead(fn, args...)
+	} else {
+		val, err = dbApp.ApplyWrite(fn, args...)
+	}
 	if err != nil {
 		return err
 	}

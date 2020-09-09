@@ -167,7 +167,7 @@ func (s *svc) Batch(commands [][]*dbApi.BatchEntry, ro bool) error {
 				case dbApi.ApplyOperation:
 					if cmd.Apply.Fn != nil {
 						var err error
-						cmd.Result, err = cmd.Apply.Fn(tx, cmd.Apply.Args)
+						cmd.Result, err = cmd.Apply.Fn(tx, cmd.Apply.Args...)
 						if err != nil {
 							cmd.Result = err
 						}

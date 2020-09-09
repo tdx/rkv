@@ -19,6 +19,9 @@ message LogOperation {
 
 	// Value corresponds to the key for get op_type
 	bytes val = 4;
+
+	// Addition arguments, used for Apply
+	repeated bytes args = 5;
 }
 
 message LogData {

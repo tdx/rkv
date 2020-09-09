@@ -28,14 +28,14 @@ func TestApply(t *testing.T) {
 	)
 
 	// no table yet
-	count, err := dbFn.Apply(fnCount, tab, true)
+	count, err := dbFn.ApplyRead(fnCount, tab)
 	require.Equal(t, true, dbApi.IsNoTableError(err))
 
 	err = db.Put(tab, key, val)
 	require.NoError(t, err)
 
 	// count keys
-	count, err = dbFn.Apply(fnCount, tab, true)
+	count, err = dbFn.ApplyRead(fnCount, tab)
 	require.NoError(t, err)
 
 	n, ok := count.(int)
@@ -43,11 +43,11 @@ func TestApply(t *testing.T) {
 	require.Equal(t, 1, n)
 
 	// update
-	_, err = dbFn.Apply(fnUp, tab, false)
+	_, err = dbFn.ApplyWrite(fnUp, tab)
 	require.NoError(t, err)
 
 	// count keys
-	count, err = dbFn.Apply(fnCount, tab, true)
+	count, err = dbFn.ApplyRead(fnCount, tab)
 	require.NoError(t, err)
 
 	n, ok = count.(int)
@@ -55,16 +55,17 @@ func TestApply(t *testing.T) {
 	require.Equal(t, 2, n)
 }
 
-
-func fnCount(dbCtx interface{}, args []byte) (interface{}, error) {
+func fnCount(dbCtx interface{}, args ...[]byte) (interface{}, error) {
 	tx, ok := dbCtx.(*bolt.Tx)
 	if !ok {
 		return nil, fmt.Errorf("invalid dbCtx: %T %T", dbCtx, tx)
 	}
 
-	var (
-		tab = args
-	)
+	if len(args) < 1 {
+		return nil, fmt.Errorf("invalid number of arguments, expected 1")
+	}
+
+	tab := args[0]
 
 	b := tx.Bucket(tab)
 	if b == nil {
@@ -76,15 +77,17 @@ func fnCount(dbCtx interface{}, args []byte) (interface{}, error) {
 	return st.KeyN, nil
 }
 
-func fnUp(dbCtx interface{}, args []byte) (interface{}, error) {
+func fnUp(dbCtx interface{}, args ...[]byte) (interface{}, error) {
 	tx, ok := dbCtx.(*bolt.Tx)
 	if !ok {
 		return nil, fmt.Errorf("invalid dbCtx: %T %T", dbCtx, tx)
 	}
 
-	var (
-		tab = args
-	)
+	if len(args) < 1 {
+		return nil, fmt.Errorf("invalid number of arguments, expected 1")
+	}
+
+	tab := args[0]
 
 	b := tx.Bucket(tab)
 	if b == nil {

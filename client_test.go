@@ -1,7 +1,6 @@
 package rkv_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -92,14 +91,18 @@ func run(t *testing.T, bkType string) {
 		return
 	}
 
-	fnCount := func(dbCtx interface{}, args []byte) (interface{}, error) {
+	fnCount := func(dbCtx interface{}, args ...[]byte) (interface{}, error) {
 		tx, ok := dbCtx.(*bolt.Tx)
 		if !ok {
 			return nil, fmt.Errorf("invalid dbCtx: %T %T", dbCtx, tx)
 		}
 
+		if len(args) != 1 {
+			return nil, fmt.Errorf("invalid arguments, expectec 1")
+		}
+
 		var (
-			tab       = args
+			tab       = args[0]
 			count int = 0
 		)
 
@@ -117,7 +120,7 @@ func run(t *testing.T, bkType string) {
 	err = client.RegisterApplyRead("count", fnCount)
 	require.NoError(t, err)
 
-	n, err := client.Apply(rkvApi.ReadCluster, "count", tab)
+	n, err := client.ApplyRead(rkvApi.ReadCluster, "count", tab)
 	require.NoError(t, err)
 
 	n, ok := n.(int)
@@ -125,33 +128,21 @@ func run(t *testing.T, bkType string) {
 	require.Equal(t, 0, n)
 
 	// apply test
-	fn := func(dbCtx interface{}, args []byte) (interface{}, error) {
+	fn := func(dbCtx interface{}, args ...[]byte) (interface{}, error) {
 
 		tx, ok := dbCtx.(*bolt.Tx)
 		if !ok {
 			return nil, fmt.Errorf("invalid dbCtx: %T %T", dbCtx, tx)
 		}
 
-		var m map[string][]byte
-		err := json.Unmarshal(args, &m)
-		if err != nil {
-			return nil, err
+		if len(args) != 3 {
+			return nil, fmt.Errorf(
+				"wrong count of arguments, expected 3, got %d", len(args))
 		}
 
-		tab, ok := m["tab"]
-		if !ok {
-			return nil, fmt.Errorf("invalid arguments: %T", m)
-		}
-
-		key, ok := m["key"]
-		if !ok {
-			return nil, fmt.Errorf("invalid arguments: %T", m)
-		}
-
-		val, ok := m["val"]
-		if !ok {
-			return nil, fmt.Errorf("invalid arguments: %T", m)
-		}
+		tab := args[0]
+		key := args[1]
+		val := args[2]
 
 		b, err := tx.CreateBucketIfNotExists(tab)
 		if err != nil {
@@ -176,10 +167,10 @@ func run(t *testing.T, bkType string) {
 	args["key"] = key2
 	args["val"] = val2
 
-	bytes, err := json.Marshal(args)
-	require.NoError(t, err)
+	// bytes, err := json.Marshal(args)
+	// require.NoError(t, err)
 
-	r, err := client.Apply(rkvApi.ReadAny, "insert", bytes)
+	r, err := client.ApplyWrite("insert", tab2, key2, val2)
 	require.NoError(t, err)
 
 	rb, ok := r.([]byte)

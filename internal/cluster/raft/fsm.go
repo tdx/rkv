@@ -112,7 +112,7 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 						Operation: dbApi.ApplyOperation,
 						Apply: &dbApi.Apply{
 							Fn:       fn,
-							Args:     cmd.Key,
+							Args:     cmd.Args,
 							ReadOnly: ro,
 						}}
 
@@ -199,7 +199,7 @@ func (f *fsm) applyData(req rpcRaft.LogData) interface{} {
 			}
 			return val
 		case applyOp:
-			return f.applyFunc(cmd.Tab, cmd.Key)
+			return f.applyFunc(cmd.Tab, cmd.Args...)
 		default:
 			err = fmt.Errorf("%q is not supported operation", cmd.OpType)
 		}

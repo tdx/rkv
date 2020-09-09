@@ -18,8 +18,8 @@ import (
 	"github.com/tdx/rkv/internal/registry"
 
 	log "github.com/hashicorp/go-hclog"
-	"github.com/stretchr/testify/require"
 	"github.com/hashicorp/raft"
+	"github.com/stretchr/testify/require"
 	"github.com/travisjeffery/go-dynaport"
 )
 
@@ -441,7 +441,7 @@ func TestRaftApply(t *testing.T) {
 	)
 
 	for i := 0; i < nodeCount; i++ {
-		ports := dynaport.Get(2)
+		ports := dynaport.Get(3)
 		dataDir, err := ioutil.TempDir("", "raft-db-test")
 		require.NoError(t, err)
 
@@ -458,8 +458,9 @@ func TestRaftApply(t *testing.T) {
 
 		config := &rRaft.Config{}
 		config.StreamLayer = rRaft.NewStreamLayer(ln)
-		// config.Raft.LogLevel = "trace"
+		config.Raft.LogLevel = "trace"
 		config.RPCAddr = fmt.Sprintf("127.0.0.1:%d", ports[1])
+		config.RaftAddr = fmt.Sprintf("127.0.0.1:%d", ports[2])
 		config.Raft.LocalID = raft.ServerID(fmt.Sprintf("%d", i))
 		config.Raft.HeartbeatTimeout = 50 * time.Millisecond
 		config.Raft.ElectionTimeout = 50 * time.Millisecond
@@ -512,7 +513,11 @@ func TestRaftApply(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	n, err := count(nodes[0], rkvApi.ReadCluster, tab)
+	n, err := count(nodes[0], rkvApi.ReadAny, tab)
+	require.NoError(t, err)
+	require.Equal(t, 10, n)
+
+	n, err = count(nodes[0], rkvApi.ReadCluster, tab)
 	require.NoError(t, err)
 	require.Equal(t, 10, n)
 
@@ -545,7 +550,7 @@ func TestRaftApply(t *testing.T) {
 	}
 
 	// call not registered function
-	_, err = nodes[0].ApplyFunc(rkvApi.ReadLeader, "unregistered", nil)
+	_, err = nodes[0].ApplyFuncRead(rkvApi.ReadLeader, "unregistered", nil)
 	require.Error(t, err)
 }
 
@@ -554,7 +559,7 @@ func count(
 	lvl rkvApi.ConsistencyLevel,
 	tab []byte) (int, error) {
 
-	r, err := node.ApplyFunc(lvl, "countTab", tab)
+	r, err := node.ApplyFuncRead(lvl, "countTab", tab)
 	if err != nil {
 		return 0, err
 	}
@@ -567,13 +572,17 @@ func count(
 	return n, nil
 }
 
-func fnCount(dbCtx interface{}, args []byte) (interface{}, error) {
+func fnCount(dbCtx interface{}, args ...[]byte) (interface{}, error) {
 	m, ok := dbCtx.(map[string]map[string][]byte)
 	if !ok {
 		return nil, fmt.Errorf("invalid dbCtx: %T %T", dbCtx, m)
 	}
 
-	tab := args
+	if len(args) < 1 {
+		return nil, fmt.Errorf("wrong number of args, expected 1")
+	}
+
+	tab := args[0]
 
 	t, ok := m[string(tab)]
 	if !ok {

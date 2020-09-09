@@ -7,8 +7,8 @@ import (
 
 var _ dbApi.Applier = (*svc)(nil)
 
-func (s *svc) Apply(
-	fn dbApi.ApplyFunc, args []byte, ro bool) (interface{}, error) {
+func (s *svc) ApplyRead(
+	fn dbApi.ApplyFunc, args ...[]byte) (interface{}, error) {
 
 	var (
 		err    error
@@ -16,22 +16,34 @@ func (s *svc) Apply(
 	)
 
 	fb := func(tx *bolt.Tx) error {
-		result, err = fn(tx, args)
+		result, err = fn(tx, args...)
 		return err
 	}
 
-	if ro {
-		s.mu.RLock()
-		defer s.mu.RUnlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
-		err = s.db.View(fb)
+	err = s.db.View(fb)
+	return result, err
+}
 
-	} else {
-		s.mu.Lock()
-		defer s.mu.Unlock()
+func (s *svc) ApplyWrite(
+	fn dbApi.ApplyFunc, args ...[]byte) (interface{}, error) {
 
-		err = s.db.Update(fb)
+	var (
+		err    error
+		result interface{}
+	)
+
+	fb := func(tx *bolt.Tx) error {
+		result, err = fn(tx, args...)
+		return err
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	err = s.db.Update(fb)
 
 	return result, err
 }

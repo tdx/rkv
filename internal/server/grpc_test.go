@@ -58,15 +58,6 @@ func setupGrpcTest(
 
 	config := &server.Config{
 		Db: raft,
-		// Disco: &ms{
-		// 	members: []*clusterApi.Server{
-		// 		{
-		// 			ID:       "1",
-		// 			RPCAddr:  l.Addr().String(),
-		// 			IsLeader: true,
-		// 		},
-		// 	},
-		// },
 	}
 
 	server, err := server.NewGRPCServer(config)
@@ -186,7 +177,7 @@ func getRaftWithDir(
 	raftDir string,
 	bkTyp string) (clusterApi.Backend, string) {
 
-	ports := dynaport.Get(1)
+	ports := dynaport.Get(3)
 
 	ln, err := net.Listen(
 		"tcp",
@@ -197,6 +188,8 @@ func getRaftWithDir(
 	config := &rRaft.Config{}
 	config.Bootstrap = bootstrap
 	config.StreamLayer = rRaft.NewStreamLayer(ln)
+	config.RPCAddr = fmt.Sprintf("127.0.0.1:%d", ports[1])
+	config.RaftAddr = fmt.Sprintf("127.0.0.1:%d", ports[2])
 	config.Raft.LocalID = raft.ServerID(id)
 	config.Raft.HeartbeatTimeout = 50 * time.Millisecond
 	config.Raft.ElectionTimeout = 50 * time.Millisecond

@@ -233,7 +233,7 @@ func (d *Backend) Batch(commands []*dbApi.BatchEntry) (interface{}, error) {
 			ops = append(ops, &rpcRaft.LogOperation{
 				OpType: applyOp,
 				Tab:    cmd.Entry.Tab,
-				Key:    cmd.Apply.Args,
+				Args:   cmd.Apply.Args,
 			})
 		}
 	}

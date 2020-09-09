@@ -24,8 +24,11 @@ type Client interface {
 	Logger(subSystem string) *log.Logger
 	Shutdown() error
 
+	// Apply
 	ApplyRegistrator
-	Apply(roLevel ConsistencyLevel,
+	ApplyRead(roLevel ConsistencyLevel,
 		fn string,
-		args []byte) (interface{}, error)
+		args ...[]byte) (interface{}, error)
+	ApplyWrite(fn string,
+		args ...[]byte) (interface{}, error)
 }

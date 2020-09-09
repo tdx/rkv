@@ -6,16 +6,20 @@ import (
 
 var _ dbApi.Applier = (*svc)(nil)
 
-func (s *svc) Apply(
-	fn dbApi.ApplyFunc, args []byte, readOnly bool) (interface{}, error) {
+func (s *svc) ApplyRead(
+	fn dbApi.ApplyFunc, args ...[]byte) (interface{}, error) {
 
-	if readOnly {
-		s.mu.RLock()
-		defer s.mu.RUnlock()
-	} else {
-		s.mu.Lock()
-		defer s.mu.Unlock()
-	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
-	return fn(s.tabs, args)
+	return fn(s.tabs, args...)
+}
+
+func (s *svc) ApplyWrite(
+	fn dbApi.ApplyFunc, args ...[]byte) (interface{}, error) {
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return fn(s.tabs, args...)
 }

@@ -10,7 +10,7 @@ type Entry struct {
 // Apply describe apply call
 type Apply struct {
 	Fn       ApplyFunc
-	Args     []byte
+	Args     [][]byte
 	ReadOnly bool
 }
 

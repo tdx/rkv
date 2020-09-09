@@ -11,8 +11,12 @@ type Backend interface {
 	Get(level rkvApi.ConsistencyLevel, tab, key []byte) ([]byte, error)
 	Delete(tab, key []byte) error
 	Batch([]*dbApi.BatchEntry) (interface{}, error)
-	ApplyFunc(roLevel rkvApi.ConsistencyLevel,
+
+	ApplyFuncRead(roLevel rkvApi.ConsistencyLevel,
 		fn string,
-		args []byte) (interface{}, error)
+		args ...[]byte) (interface{}, error)
+	ApplyFuncWrite(fn string,
+		args ...[]byte) (interface{}, error)
+
 	dbApi.Closer
 }

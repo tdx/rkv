@@ -27,10 +27,19 @@ func (a *Agent) GetApplyFunc(name string) (dbApi.ApplyFunc, bool, error) {
 	return a.registry.GetApplyFunc(name)
 }
 
-// Apply ...
-func (a *Agent) Apply(
+// ApplyRead ...
+func (a *Agent) ApplyRead(
 	roLevel rkvApi.ConsistencyLevel,
 	fn string,
-	args []byte) (interface{}, error) {
-	return a.raftDb.ApplyFunc(roLevel, fn, args)
+	args ...[]byte) (interface{}, error) {
+
+	return a.raftDb.ApplyFuncRead(roLevel, fn, args...)
+}
+
+// ApplyWrite ...
+func (a *Agent) ApplyWrite(
+	fn string,
+	args ...[]byte) (interface{}, error) {
+
+	return a.raftDb.ApplyFuncWrite(fn, args...)
 }
