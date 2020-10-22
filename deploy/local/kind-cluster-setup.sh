@@ -1,6 +1,11 @@
 #!/bin/sh
 kind create cluster --config cluster.yaml
 
+# make worker roles
+kubectl label node kind-worker  node-role.kubernetes.io/worker=
+kubectl label node kind-worker2 node-role.kubernetes.io/worker=
+kubectl label node kind-worker3 node-role.kubernetes.io/worker=
+
 # load balancer
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/metallb.yaml

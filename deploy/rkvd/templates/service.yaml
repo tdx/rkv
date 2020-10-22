@@ -6,7 +6,6 @@ metadata:
   labels: {{- include "rkvd.labels" . | nindent 4 }}
 spec:
   clusterIP: None
-#  type: LoadBalancer
   publishNotReadyAddresses: true
   ports:
     - name: serf-tcp

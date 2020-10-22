@@ -13,4 +13,4 @@ pb:
 
 docker:
 	$(eval GIT_TAG=$(shell git describe --tags --abbrev=0))
-	docker build -t github.com/tdx/rkvd:$(GIT_TAG) -f deploy/Dockerfile .
+	docker build -t rkvd:$(GIT_TAG) -f deploy/Dockerfile .

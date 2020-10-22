@@ -26,9 +26,8 @@ spec:
                 matchExpressions:
                   - key: "app"
                     operator: In
-                    values:
-                    - {{ include "rkvd.fullname" . }}
-              topologyKey: "kubernetes.io/hostname"
+                    values: ["rkvd"]
+              topologyKey: "app.kubernetes.io/name"
       initContainers:
       - name: {{ include "rkvd.fullname" . }}-config-init
         image: busybox
@@ -42,12 +41,12 @@ spec:
             node-name: $ID
             data-dir: /var/run/rkvd
             db: {{ .Values.db }}
-            discovery-addr: "$HOSTNAME.rkvd.{{.Release.Namespace}}.svc.cluster.local:{{.Values.serfPort}}"
-            $([ $ID != 0 ] && echo 'discovery-join-addrs: "rkvd-0.rkvd.{{.Release.Namespace}}.svc.cluster.local:{{.Values.serfPort}}"')
-            raft-port: {{.Values.raftPort}}
-            rpc-port: {{.Values.rpcPort}}
+            discovery-addr: "$HOSTNAME.rkvd.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.serfPort }}"
+            $([ $ID != 0 ] && echo 'discovery-join-addrs: "rkvd-0.rkvd.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.serfPort }}"')
+            raft-port: {{ .Values.raftPort }}
+            rpc-port: {{ .Values.rpcPort }}
             bootstrap: $([ $ID = 0 ] && echo true || echo false )
-            http-addr: ":{{.Values.httpPort}}"
+            http-addr: ":{{ .Values.httpPort }}"
             log-level: {{ .Values.log }}
             raft-snapshot-interval: {{ .Values.raftSnapshotInterval }}
             EOD
@@ -68,16 +67,13 @@ spec:
           name: http
         args:
           - --config-file=/var/run/rkvd/config.yaml
-        env:
-          - name: CLUSTER_ADDRS
-            value: ""
         readinessProbe:
           exec:
             command:
               - /bin/sh
               - -c
               - |
-                /bin/grpc_health_probe -addr=$HOSTNAME:{{ .Values.rpcPort }}
+                /bin/grpc_health_probe -addr=$HOSTNAME.rkvd:{{ .Values.rpcPort }}
           initialDelaySeconds: 5
         livenessProbe:
           exec:
@@ -85,11 +81,18 @@ spec:
               - /bin/sh
               - -c
               - |
-                /bin/grpc_health_probe -addr=$HOSTNAME:{{ .Values.rpcPort }}
+                /bin/grpc_health_probe -addr=$HOSTNAME.rkvd:{{ .Values.rpcPort }}
           initialDelaySeconds: 10
         volumeMounts:
         - name: datadir
           mountPath: /var/run/rkvd
+        - name: settings
+          mountPath: /usr/local/rkvd/settings
+      volumes:
+      - name: settings
+        nfs:
+          path: /var/nfs/general
+          server: 192.168.10.34
   volumeClaimTemplates:
   - metadata:
       name: datadir
@@ -98,3 +101,5 @@ spec:
       resources:
         requests:
           storage: {{ .Values.storage }}
+
+
