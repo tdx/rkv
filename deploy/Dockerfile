@@ -8,21 +8,7 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.3.2 && \
 ${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
     chmod +x /go/bin/grpc_health_probe
 
-FROM alpine:latest
-RUN set -ex \
-    && echo "http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories \
-    && echo "http://nl.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
-    && echo "http://nl.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
-    && apk update \
-    && apk upgrade \
-    && apk add --no-cache \
-    bash \
-    curl \
-    ethtool \
-    iputils \
-    jq \
-    mtr \
-    nfs-utils
+FROM nicolaka/netshoot
 COPY --from=build /go/bin/rkvd /bin/rkvd
 COPY --from=build /go/bin/grpc_health_probe /bin/grpc_health_probe
 COPY example/cluster/put /bin/put
