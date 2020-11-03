@@ -1,12 +1,19 @@
 FROM golang:1.15-alpine AS build
+
 WORKDIR /go/src/rkv
-COPY . .
-RUN CGO_ENABLED=0 go build -o /go/bin/rkvd ./cmd/rkvd
+
 RUN GRPC_HEALTH_PROBE_VERSION=v0.3.2 && \
     wget -qO/go/bin/grpc_health_probe \
     https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/\
 ${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
     chmod +x /go/bin/grpc_health_probe
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 go build -o /go/bin/rkvd ./cmd/rkvd
 
 FROM nicolaka/netshoot
 COPY --from=build /go/bin/rkvd /bin/rkvd

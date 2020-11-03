@@ -37,8 +37,6 @@ spec:
           - -c
           - |-
             ID=$(echo $HOSTNAME | rev | cut -d- -f1 | rev)
-            mkdir -p /usr/local/rkvd/settings
-            mount -o vers=4 192.168.10.34:/var/nfs/general/rkvd/rkvd-$ID/settings /usr/local/rkvd/settings
             cat > /var/run/rkvd/config.yaml <<EOD
             node-name: $ID
             data-dir: /var/run/rkvd
@@ -88,6 +86,13 @@ spec:
         volumeMounts:
         - name: datadir
           mountPath: /var/run/rkvd
+        - name: settings
+          mountPath: /usr/local/rkvd/settings
+      volumes:
+      - name: settings
+        nfs:
+          path: /var/nfs/general/rkvd/rkvd-0/settings
+          server: 192.168.10.34
   volumeClaimTemplates:
   - metadata:
       name: datadir
