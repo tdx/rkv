@@ -30,16 +30,17 @@ func NewClient(config *api.Config) (api.Client, error) {
 	config.Raft.LogLevel = config.LogLevel
 
 	return agent.New(&agent.Config{
-		Raft:           config.Raft,
-		DataDir:        config.DataDir,
-		Backend:        config.Backend,
-		Logger:         config.Logger,
-		NodeName:       config.NodeName,
-		BindAddr:       config.DiscoveryAddr,
-		StartJoinAddrs: config.DiscoveryJoinAddrs,
-		RaftPort:       config.RaftPort,
-		RPCPort:        config.RPCPort,
-		BindHTTP:       config.HTTPAddr,
-		Bootstrap:      len(config.DiscoveryJoinAddrs) == 0,
+		Raft:             config.Raft,
+		DataDir:          config.DataDir,
+		Backend:          config.Backend,
+		Logger:           config.Logger,
+		NodeName:         config.NodeName,
+		BindAddr:         config.DiscoveryAddr,
+		StartJoinAddrs:   config.DiscoveryJoinAddrs,
+		RaftPort:         config.RaftPort,
+		RPCPort:          config.RPCPort,
+		BindHTTP:         config.HTTPAddr,
+		Bootstrap:        len(config.DiscoveryJoinAddrs) == 0,
+		OnLeaderChangeFn: config.OnChangeLeaderFn,
 	})
 }

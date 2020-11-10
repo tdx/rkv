@@ -15,6 +15,9 @@ func (d *Backend) waitEvents() {
 	for o := range d.observationCh {
 		switch r := o.Data.(type) {
 		case raft.LeaderObservation:
+			if d.config.OnLeaderChangeFn != nil {
+				d.config.OnLeaderChangeFn(d.raft.State() == raft.Leader)
+			}
 			d.leaderChanged(r.Leader)
 		}
 	}

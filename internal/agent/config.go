@@ -36,6 +36,8 @@ type Config struct {
 	LogOutput          io.Writer
 	LogIncludeLocation bool
 	LogTimeFormat      string
+	//
+	OnLeaderChangeFn func(isLeader bool)
 }
 
 // RPCAddr returns host:port

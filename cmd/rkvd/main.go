@@ -176,6 +176,9 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 	c.Config.RaftPort = viper.GetInt("raft-port")
 	c.Config.RPCPort = viper.GetInt("rpc-port")
 	c.Config.HTTPAddr = viper.GetString("http-addr")
+	c.Config.OnChangeLeaderFn = func(isLeader bool) {
+		logger.Info("leader changed", "node", c.Config.NodeName, "is-leader", isLeader)
+	}
 
 	return nil
 }

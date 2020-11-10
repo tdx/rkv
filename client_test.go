@@ -56,6 +56,9 @@ func run(t *testing.T, bkType string) {
 		LogLevel:      "debug",
 		DiscoveryAddr: fmt.Sprintf("127.0.0.1:%d", ports[0]),
 		RaftPort:      ports[1],
+		OnChangeLeaderFn: func(isLeader bool) {
+			t.Log("isLeader:", isLeader)
+		},
 	}
 
 	client, err := rkv.NewClient(config)

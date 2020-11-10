@@ -14,6 +14,7 @@ type Config struct {
 	StreamLayer      *StreamLayer
 	Bootstrap        bool
 	ApplyRegistrator rkvApi.ApplyRegistrator
+	OnLeaderChangeFn func(isLeader bool)
 }
 
 // ServerID returns raft.ServerID from string

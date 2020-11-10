@@ -34,4 +34,6 @@ type Config struct {
 	LogOutput          io.Writer
 	LogIncludeLocation bool
 	LotTimeFormat      string
+	//
+	OnChangeLeaderFn func(isLeader bool)
 }

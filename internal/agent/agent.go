@@ -139,6 +139,7 @@ func (a *Agent) setupRaft() error {
 	config.StreamLayer = rbk.NewStreamLayer(ln)
 	config.Bootstrap = a.Config.Bootstrap
 	config.ApplyRegistrator = a.registry
+	config.OnLeaderChangeFn = a.Config.OnLeaderChangeFn
 
 	a.raftDb, err = rbk.New(a.Config.Backend, config)
 	if err != nil {
