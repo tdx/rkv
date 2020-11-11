@@ -70,15 +70,17 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 			}
 			for _, cmd := range command.Operations {
 
-				if cmd.OpType == applyOp {
-					f.logger.Trace("applyBatch", "raft_index", log.Index,
-						"raft_term", log.Term, "cmd_type", cmd.OpType,
-						"log", i, "commands", len(command.Operations),
-						"func", string(cmd.Tab), "args", len(cmd.Args))
-				} else {
-					f.logger.Trace("applyBatch", "raft_index", log.Index,
-						"raft_term", log.Term, "cmd_type", cmd.OpType,
-						"log", i, "commands", len(command.Operations))
+				if f.logger.IsTrace() {
+					if cmd.OpType == applyOp {
+						f.logger.Trace("applyBatch", "raft_index", log.Index,
+							"raft_term", log.Term, "cmd_type", cmd.OpType,
+							"log", i, "commands", len(command.Operations),
+							"func", string(cmd.Tab), "args", len(cmd.Args))
+					} else {
+						f.logger.Trace("applyBatch", "raft_index", log.Index,
+							"raft_term", log.Term, "cmd_type", cmd.OpType,
+							"log", i, "commands", len(command.Operations))
+					}
 				}
 
 				switch cmd.OpType {
