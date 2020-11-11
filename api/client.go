@@ -23,6 +23,7 @@ type Client interface {
 
 	Logger(subSystem string) *log.Logger
 	Shutdown() error
+	Leader() (host, ip string)
 
 	// Apply
 	ApplyRegistrator

@@ -90,6 +90,11 @@ func (a *Agent) Shutdown() error {
 	return nil
 }
 
+// Leader ...
+func (a *Agent) Leader() (string, string) {
+	return a.raftDb.(clusterApi.Cluster).Leader()
+}
+
 //
 func isLeader(db clusterApi.Backend) bool {
 	return db.(clusterApi.Cluster).IsLeader()
