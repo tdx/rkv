@@ -103,12 +103,13 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 						}})
 
 				case applyOp:
-					fn, ro, err := f.appReg.GetApplyFunc(string(cmd.Tab))
+					fnName := string(cmd.Tab)
+					fn, ro, err := f.appReg.GetApplyFunc(fnName)
 					if !ro {
 						readOnly = false
 					}
 
-					cmd := &dbApi.BatchEntry{
+					command := &dbApi.BatchEntry{
 						Operation: dbApi.ApplyOperation,
 						Apply: &dbApi.Apply{
 							Fn:       fn,
@@ -117,10 +118,10 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 						}}
 
 					if err != nil {
-						f.logger.Error("applyFun", "bad_func", err)
-						cmd.Result = err
+						f.logger.Error("applyFun", "func", fnName, "error", err)
+						command.Result = err
 					}
-					commands[i] = append(commands[i], cmd)
+					commands[i] = append(commands[i], command)
 
 				default:
 					f.logger.Error("applyBatch", "bad_cmd", cmd.OpType)
