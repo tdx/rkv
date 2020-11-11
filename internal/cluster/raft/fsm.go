@@ -118,7 +118,8 @@ func (f *fsm) ApplyBatch(logs []*raft.Log) []interface{} {
 						}}
 
 					if err != nil {
-						f.logger.Error("applyFun", "func", fnName, "error", err)
+						f.logger.Error("applyFun", "func", fnName,
+							"args", len(cmd.Args), "error", err)
 						command.Result = err
 					}
 					commands[i] = append(commands[i], command)
