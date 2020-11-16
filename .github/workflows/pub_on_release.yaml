@@ -4,12 +4,38 @@ on:
     types: [published]
     
 jobs:
+  
+  run_tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    
+    env:
+      GOPRIVATE: github.com/ndmsystems
+
+    steps:
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.15
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Get dependencies
+      run: go mod download -x
+
+    - name: Test
+      run: go test -v .
+   
   push_to_registry:
     name: Push Docker image to GitHub Packages
+    needs: [run_tests]
     runs-on: ubuntu-latest
+    
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
+        
       - name: Push to GitHub Packages
         uses: docker/build-push-action@v1
         with:
