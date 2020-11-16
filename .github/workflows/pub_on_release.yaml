@@ -36,6 +36,12 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v2
         
+      - name: Prepare Dockerfile
+        run: ln -s deploy/Dockerfile .
+        
+      - name: Prepare .dockerignore
+        run: ln -s deploy/.dockerignore .
+        
       - name: Push to GitHub Packages
         uses: docker/build-push-action@v1
         with:
