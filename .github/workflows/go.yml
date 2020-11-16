@@ -11,6 +11,10 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    
+    env:
+      GOPRIVATE: github.com/ndmsystems
+  
     steps:
 
     - name: Set up Go 1.x
