@@ -8,8 +8,8 @@ on:
 
 jobs:
 
-  build:
-    name: Build
+  run_tests:
+    name: Run tests
     runs-on: ubuntu-latest
     
     env:
@@ -30,6 +30,3 @@ jobs:
 
     - name: Test
       run: go test -v .
-      
-    - name: Build
-      run: go build -v .
