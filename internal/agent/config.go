@@ -38,6 +38,8 @@ type Config struct {
 	LogTimeFormat      string
 	//
 	OnLeaderChangeFn func(isLeader bool)
+	//
+	Registry rkvApi.ApplyRegistrator
 }
 
 // RPCAddr returns host:port

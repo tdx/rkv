@@ -9,15 +9,6 @@ import (
 	rpcRaft "github.com/tdx/rkv/internal/rpc/raft"
 )
 
-// // ApplyFuncArgs used in gob enc/dec
-// type ApplyFuncArgs struct {
-// 	Args interface{}
-// }
-
-// func init() {
-// 	gob.Register(ApplyFuncArgs{})
-// }
-
 // ApplyFuncRead calls 'name' function on raft cluster
 func (d *Backend) ApplyFuncRead(
 	roLevel rkvApi.ConsistencyLevel,

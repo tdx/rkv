@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rkvd
+  namespace: default
+  labels:
+    helm.sh/chart: rkvd-0.2.3
+    app.kubernetes.io/name: rkvd
+    app.kubernetes.io/instance: rkvd
+    app.kubernetes.io/version: "0.5.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: serf-tcp
+      protocol: "TCP"
+      port: 8400
+      targetPort: 8400
+    - name: serf-udp
+      protocol: "UDP"
+      port: 8400
+      targetPort: 8400
+    - name: raft
+      protocol: "TCP"
+      port: 8401
+      targetPort: 8401
+    - name: rpc
+      protocol: "TCP"
+      port: 8402
+      targetPort: 8402
+    - name: http
+      protocol: "TCP"
+      port: 8403
+      targetPort: 8403
+  selector:
+    app.kubernetes.io/name: rkvd
+    app.kubernetes.io/instance: rkvd
+

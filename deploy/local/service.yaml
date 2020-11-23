@@ -6,7 +6,6 @@ metadata:
   labels:
     app.kubernetes.io/name: rkvd
     app.kubernetes.io/instance: rkvd
-    app.kubernetes.io/version: 0.3.2
 spec:
   type: LoadBalancer
   ports:

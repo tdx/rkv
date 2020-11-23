@@ -5,6 +5,7 @@ import (
 
 	"github.com/tdx/rkv/api"
 	"github.com/tdx/rkv/internal/agent"
+	"github.com/tdx/rkv/registry"
 
 	hlog "github.com/hashicorp/go-hclog"
 )
@@ -29,6 +30,11 @@ func NewClient(config *api.Config) (api.Client, error) {
 	}
 	config.Raft.LogLevel = config.LogLevel
 
+	reg := config.Registry
+	if reg == nil {
+		reg = registry.NewApplyRegistrator()
+	}
+
 	return agent.New(&agent.Config{
 		Raft:             config.Raft,
 		DataDir:          config.DataDir,
@@ -42,5 +48,6 @@ func NewClient(config *api.Config) (api.Client, error) {
 		BindHTTP:         config.HTTPAddr,
 		Bootstrap:        len(config.DiscoveryJoinAddrs) == 0,
 		OnLeaderChangeFn: config.OnChangeLeaderFn,
+		Registry:         reg,
 	})
 }

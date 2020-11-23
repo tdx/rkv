@@ -37,9 +37,9 @@ spec:
           - -c
           - |-
             ID=$(echo $HOSTNAME | rev | cut -d- -f1 | rev)
-            cat > /var/run/rkvd/config.yaml <<EOD
+            cat > /usr/local/rkvd/config.yaml <<EOD
             node-name: $ID
-            data-dir: /var/run/rkvd
+            data-dir: /usr/local/rkvd
             db: {{ .Values.db }}
             discovery-addr: "$HOSTNAME.rkvd.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.serfPort }}"
             $([ $ID != 0 ] && echo 'discovery-join-addrs: "rkvd-0.rkvd.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.serfPort }}"')
@@ -52,7 +52,7 @@ spec:
             EOD
         volumeMounts:
         - name: datadir
-          mountPath: /var/run/rkvd
+          mountPath: /usr/local/rkvd
       containers:
       - name: {{ include "rkvd.fullname" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -66,7 +66,7 @@ spec:
         - containerPort: {{ .Values.httpPort }}
           name: http
         args:
-          - --config-file=/var/run/rkvd/config.yaml
+          - --config-file=/usr/local/rkvd/config.yaml
         readinessProbe:
           exec:
             command:
@@ -85,7 +85,7 @@ spec:
           initialDelaySeconds: 10
         volumeMounts:
         - name: datadir
-          mountPath: /var/run/rkvd
+          mountPath: /usr/local/rkvd
         - name: settings
           mountPath: /usr/local/rkvd/settings
       volumes:
