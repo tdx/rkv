@@ -24,6 +24,7 @@ type Client interface {
 	Logger(subSystem string) *log.Logger
 	Shutdown() error
 	Leader() (host, ip string)
+	IsLeader() bool
 
 	// Apply
 	ApplyRegistrator

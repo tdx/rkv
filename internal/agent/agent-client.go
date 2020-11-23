@@ -95,6 +95,11 @@ func (a *Agent) Leader() (string, string) {
 	return a.raftDb.(clusterApi.Cluster).Leader()
 }
 
+// IsLeader ...
+func (a *Agent) IsLeader() bool {
+	return a.raftDb.(clusterApi.Cluster).IsLeader()
+}
+
 //
 func isLeader(db clusterApi.Backend) bool {
 	return db.(clusterApi.Cluster).IsLeader()
