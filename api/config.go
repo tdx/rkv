@@ -36,4 +36,5 @@ type Config struct {
 	LotTimeFormat      string
 	//
 	OnChangeLeaderFn func(isLeader bool)
+	Registry         ApplyRegistrator
 }

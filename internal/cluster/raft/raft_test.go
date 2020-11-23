@@ -15,7 +15,7 @@ import (
 	"github.com/tdx/rkv/db/bolt"
 	"github.com/tdx/rkv/db/gmap"
 	rRaft "github.com/tdx/rkv/internal/cluster/raft"
-	"github.com/tdx/rkv/internal/registry"
+	"github.com/tdx/rkv/registry"
 
 	log "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/raft"

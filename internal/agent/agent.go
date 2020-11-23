@@ -13,9 +13,9 @@ import (
 	clusterApi "github.com/tdx/rkv/internal/cluster/api"
 	rbk "github.com/tdx/rkv/internal/cluster/raft"
 	"github.com/tdx/rkv/internal/discovery"
-	"github.com/tdx/rkv/internal/registry"
 	"github.com/tdx/rkv/internal/route"
 	"github.com/tdx/rkv/internal/server"
+	"github.com/tdx/rkv/registry"
 
 	hlog "github.com/hashicorp/go-hclog"
 	"google.golang.org/grpc"
@@ -85,7 +85,11 @@ func New(cfg *Config) (*Agent, error) {
 	a := &Agent{
 		Config:   cfg,
 		logger:   logger,
-		registry: registry.NewApplyRegistrator(),
+		registry: cfg.Registry,
+	}
+
+	if a.registry == nil {
+		a.registry = registry.NewApplyRegistrator()
 	}
 
 	setup := []func() error{
