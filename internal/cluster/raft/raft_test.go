@@ -31,9 +31,9 @@ func TestNodesMap(t *testing.T) {
 	run(t, "map")
 }
 
-func TestNodesBitcask(t *testing.T) {
-	run(t, "bitcask")
-}
+// func TestNodesBitcask(t *testing.T) {
+// 	run(t, "bitcask")
+// }
 
 func run(t *testing.T, bkType string) {
 	var (

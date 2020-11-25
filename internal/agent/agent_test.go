@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -28,9 +27,9 @@ func TestAgentMap(t *testing.T) {
 	runAgent(t, "map")
 }
 
-func TestAgentBitcask(t *testing.T) {
-	runAgent(t, "bitcask")
-}
+// func TestAgentBitcask(t *testing.T) {
+// 	runAgent(t, "bitcask")
+// }
 
 func runAgent(t *testing.T, bkType string) {
 	var agents []*agent.Agent
@@ -70,6 +69,7 @@ func runAgent(t *testing.T, bkType string) {
 
 		agent, err := agent.New(&agent.Config{
 			Backend:        db,
+			DataDir:        dataDir,
 			Logger:         logger,
 			NodeName:       nodeName,
 			BindAddr:       bindAddr,
@@ -84,7 +84,7 @@ func runAgent(t *testing.T, bkType string) {
 	}
 	defer func() {
 		for _, agent := range agents {
-			dir := filepath.Dir(agent.Config.Backend.DSN())
+			dir := agent.Config.DataDir
 
 			err := agent.Shutdown()
 			require.NoError(t, err)
