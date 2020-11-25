@@ -20,10 +20,12 @@ type persist struct {
 	s          *store
 }
 
+const rkvClusterFile = "rkv-rt.json"
+
 func newPersist(dir string) (*persist, error) {
 
 	p := &persist{
-		configFile: filepath.Join(dir, "rkv-rt.json"),
+		configFile: filepath.Join(dir, rkvClusterFile),
 		s:          &store{},
 	}
 
@@ -33,6 +35,10 @@ func newPersist(dir string) (*persist, error) {
 			return p, nil
 		}
 		return nil, err
+	}
+
+	if len(b) == 0 {
+		return p, nil
 	}
 
 	var s store
