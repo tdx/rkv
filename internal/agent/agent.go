@@ -92,16 +92,19 @@ func New(cfg *Config) (*Agent, error) {
 		a.registry = registry.NewApplyRegistrator()
 	}
 
-	setup := []func() error{
-		a.setupRoute,
-		a.setupRaft,
-		a.setupMembership,
-		a.setupGrpcServer,
-		a.setupHTTPServer,
+	var setup = []struct {
+		name string
+		fn   func() error
+	}{
+		{"setupRoute", a.setupRoute},
+		{"setupRaft", a.setupRaft},
+		{"setupMembership", a.setupMembership},
+		{"setupGrpcServer", a.setupGrpcServer},
+		{"setupHTTPServer", a.setupHTTPServer},
 	}
-	for _, fn := range setup {
-		if err := fn(); err != nil {
-			return nil, err
+	for _, s := range setup {
+		if err := s.fn(); err != nil {
+			return nil, fmt.Errorf("%v: %v", s.name, err)
 		}
 	}
 	return a, nil
@@ -152,7 +155,7 @@ func (a *Agent) setupRaft() error {
 	if a.Config.Bootstrap && !a.raftDb.(clusterApi.Cluster).Restarted() {
 		return a.raftDb.(clusterApi.Cluster).WaitForLeader(3 * time.Second)
 	}
-	return err
+	return nil
 }
 
 func (a *Agent) setupMembership() error {
