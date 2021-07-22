@@ -5,7 +5,7 @@ import (
 
 	dbApi "github.com/tdx/rkv/db/api"
 
-	"github.com/prologic/bitcask"
+	"git.mills.io/prologic/bitcask"
 )
 
 type svc struct {

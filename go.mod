@@ -16,7 +16,7 @@ require (
 	github.com/hashicorp/serf v0.9.5
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/miekg/dns v1.1.35 // indirect
-	github.com/prologic/bitcask v0.3.9
+	git.mills.io/prologic/bitcask v0.3.9
 	github.com/rboyer/safeio v0.2.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.1
